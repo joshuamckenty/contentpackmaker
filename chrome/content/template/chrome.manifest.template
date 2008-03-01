@@ -1,0 +1,4 @@
+overlay chrome://browser/content/browser.xul chrome://%EXTENNAME%/content/browserOverlay.xul
+
+content  %EXTENNAME%    chrome/content/
+skin     %EXTENNAME%    classic/1.0	chrome/skin/

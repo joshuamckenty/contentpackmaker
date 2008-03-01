@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/global.css" type="text/css"?>
+<?xml-stylesheet href="chrome://contentpackmaker/content/contentpackmaker.css" type="text/css"?>
+
+
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  title="Content Pack Maker" align="center" pack="center">
+  
+  <script type="application/x-javascript" src="chrome://global/content/nsDragAndDrop.js"/>
+  <script type="application/x-javascript" src="chrome://contentpackmaker/content/dnd.js"/>
+  <script type="application/x-javascript" src="chrome://contentpackmaker/content/main.js"/>
+  
+  <spacer flex="1"/>
+  <hbox style="padding: 10px;">
+  <description style="font-size: 200%; ">WELCOME TO CONTENTPACK MAKER! 
+    Simply collect the content you want, and follow the instructions below.</description>
+  </hbox>
+    <spacer flex="1"/>
+  
+  <vbox flex="1">
+    <hbox>
+      <description>Where to save the content pack</description>
+      <spacer flex="1"/>
+      <textbox disabled="true" enabled="false" id="cp_base_path"/>
+      <spacer flex="1"/>
+      <button label="pick location" oncommand="cp_controller.show_directory_picker();" id="cp_save_location"/>
+    </hbox>
+    <hbox>
+      <description>The Name of the Pack</description>
+      <spacer flex="1"/>
+      <textbox id="cp_name"/>
+    </hbox>
+    <spacer height="20"/>
+    <hbox>
+      <box style="min-height: 300px; min-width: 300px; border: 1px dotted gray; margin: 20px;" pack="center" align="center">
+        <description>Drag and Drop stuff here</description>
+      </box>
+      <vbox style="min-height: 300px; min-width: 300px;">
+        <description>Current Manifest</description>
+        <vbox id="cp_manifest"/>
+      </vbox>
+    </hbox>
+    <vbox style="border: 2px dotted red; margin: 20px; padding: 10px;">
+      <description>Actions</description>
+      <hbox>
+        <button label="Save Content Pack" oncommand="cp_controller.write_pack();"/>
+        <button label="Reset Contents" oncommand="alert('implement me!');"/>
+      </hbox>
+    </vbox>
+    
+  </vbox>
+  <spacer flex="1"/>
+</window>

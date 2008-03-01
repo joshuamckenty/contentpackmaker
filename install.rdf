@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest">
+    <em:id>contentpackmaker@cognition.ca</em:id>
+    <em:name>ContentPackMaker</em:name>
+    <em:version>0.1</em:version>
+    <em:description>Handy tool for building contentpack extensions</em:description>
+    <em:creator>Joshua McKenty</em:creator>
+    <em:updateURL>https://www.cognition.ca/extensions/update.rdf</em:updateURL>    
+    <em:homepageURL>https://www.cognition.ca/contentpackmaker/</em:homepageURL>
+    <em:iconURL>chrome://contentpackmaker/skin/icon_32x32.png</em:iconURL>
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>1.5</em:minVersion>
+        <em:maxVersion>3.0</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+    <em:targetApplication>
+      <Description>
+        <em:id>{a463f10c-3994-11da-9945-000d60ca027b}</em:id>
+        <em:minVersion>0.5</em:minVersion>
+        <em:maxVersion>3.0.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+  </Description>
+</RDF>

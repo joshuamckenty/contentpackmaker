@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" id="contentpackmaker-overlay">
+	
+  <menupopup id="menu_ToolsPopup">
+    <menuitem insertafter="devToolsSeparator" 
+      label="ContentPackMaker"
+      accesskey="P"
+      oncommand="openUILinkIn('chrome://contentpackmaker/content/contentpackmaker.xul', 'tab');" />
+  </menupopup>
+
+</overlay>
