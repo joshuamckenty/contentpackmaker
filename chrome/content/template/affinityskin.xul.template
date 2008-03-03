@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?xml-stylesheet href="chrome://%EXTENNAME%/content/affinityskin.css" 
+                 type="text/css"?>
+
+<!DOCTYPE overlay SYSTEM "chrome://%EXTENNAME%/locale/affinityskin.dtd">
+<overlay id="affinityskin-overlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <script type="application/x-javascript" 
+          src="chrome://flock/content/feeds/feedUtils.js"/>
+  <script type="application/x-javascript"
+          src="chrome://flock/content/photo/photoAPI.js" />  
+	<script type="application/x-javascript" 
+	        src="chrome://%EXTENNAME%/content/contentpack.js"/>
+			
+  <stringbundleset id="stringbundleset">
+    <stringbundle id="%EXTENNAME%ContentPackStringBundle"
+                  src="chrome://%EXTENNAME%/locale/affinityskin.properties"/>
+  </stringbundleset>
+
+	<window id="main-window" affinityskin="true"></window>
+	<statusbar id="status-bar" affinityskin="true"></statusbar> 
+
+</overlay>

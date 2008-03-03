@@ -1,0 +1,305 @@
+// BEGIN FLOCK GPL
+//
+// Copyright Flock Inc. 2005-2008
+// http://flock.com
+//
+// This file may be used under the terms of the
+// GNU General Public License Version 2 or later (the "GPL"),
+// http://www.gnu.org/licenses/gpl.html
+//
+// Software distributed under the License is distributed on an "AS IS" basis,
+// WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+// for the specific language governing rights and limitations under the
+// License.
+//
+// END FLOCK GPL
+
+var AFFINITY_ID = "%EXTENNAME%@contentpack.flock";
+const SHOW_DELAY = 500;
+
+var %EXTENNAME%ContentPackController = {
+  PREFBASE: "flock.affinity.%EXTENNAME%.",
+  _uninstallRequested : false,
+  _prefSvc: Cc["@mozilla.org/preferences-service;1"]
+            .getService(Ci.nsIPrefBranch).QueryInterface(Ci.nsIPrefBranch2),
+  _obsSrv: Cc["@mozilla.org/observer-service;1"]
+           .getService(Ci.nsIObserverService),
+  version: Cc["@mozilla.org/extensions/manager;1"]
+           .getService(Ci.nsIExtensionManager)
+           .getItemForID(AFFINITY_ID).version,
+
+  startUp: function startUp() {
+    if (!this.version) {
+      throw "Unknown affinity ID: " + AFFINITY_ID;
+    }
+    this.register();
+  
+    // Check for a first-run or updated extension and display some additional
+    // information to users.
+    var lastVersion = this._getPref(this.PREFBASE + "lastversion");
+    if (lastVersion == this.version) {
+      return;
+    }                  
+
+    var pageURL;
+    if (lastVersion == "firstrun") {
+      //this.sendPing("install");
+      pageURL = this._getPref(this.PREFBASE + "firstRunURL");
+    } else {
+      this.uninstallContent();
+      pageURL = this._getPref(this.PREFBASE + "upgradeURL");
+    }
+    if (pageURL) {
+      setTimeout(function(){window.openUILinkIn(pageURL, "tab")}, SHOW_DELAY);
+    }
+    
+    this._prefSvc.setCharPref(this.PREFBASE + "lastversion", this.version);
+    this.installContent();
+
+    var homepage = this._getPref(this.PREFBASE + "flockHomepage");
+    if (!homepage) {
+      try {
+        this._prefSvc.clearUserPref("browser.startup.homepage");
+      }
+      catch (e) { }
+    }
+    else {
+      var str = Cc["@mozilla.org/supports-string;1"]
+                .createInstance(Ci.nsISupportsString);
+      str.data = homepage;
+      this._prefSvc.setComplexValue("browser.startup.homepage",
+                                     Ci.nsISupportsString, str);
+    }
+  },
+  
+  get coop() {
+    if (!this._coop) {
+      var _coopfile = "chrome://flock/content/common/load-faves-coop.js";
+      this._coop = Cc["@flock.com/singleton;1"]
+                  .getService(Ci.flockISingleton)
+                  .getSingleton(_coopfile).wrappedJSObject;
+
+      var contentCoop = "/content/contentpack-coop.js";
+      this._coop.addSchema("chrome://%EXTENNAME%" + contentCoop);
+      this._coop.installedContent = new this._coop.ContentNode(AFFINITY_ID);
+    }
+    return this._coop;
+  },
+
+  installContent: function installContent() {
+    //this._prefSvc.setCharPref(this.PREFBASE + "lastInstallTime", Date.now());
+    var prefix = "chrome://%EXTENNAME%";
+    this.loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
+                  .getService(Ci.mozIJSSubScriptLoader);
+    // improvement: get this from an exported html file
+    this.addFavorites(prefix + "/locale/profile/defaultBookmarks.js");
+    this.addFavorites(prefix + "/locale/profile/defaultMedia.js");
+    this.loadOPML(prefix + "/locale/profile/defaultFeeds.opml");
+  },
+
+  uninstallContent: function uninstallContent() {
+    //var installTime = this._getPref(this.PREFBASE + "lastInstallTime");
+
+    var theEnum = this.coop.installedContent.ids.enumerate();
+    while (theEnum.hasMoreElements()) {
+      var installedId = theEnum.getNext();
+      var thisNode = this.coop.get(installedId);
+      // skip the following if we are upgrading and a user has deleted it.
+      if (this._uninstallRequested || (thisNode && thisNode.getParent())) {
+        this.coop.installedContent.ids.remove(installedId);
+        // check to see if this node is still used by another affinity
+        var otherRefs = this.coop.ContentNode.find({ids: installedId});
+        if (otherRefs.length) {
+          continue;
+        }
+      }
+      while (thisNode) {
+        var parents = thisNode.getParents();
+        if (thisNode.isInstanceOf(this.coop.Feed)) {
+          // unsubscribe this feed. The House keeper will do the rest.
+          thisNode.isPollable = false;
+          for each (var parent in parents) {
+            parent.children.remove(thisNode);
+            if (parent.isInstanceOf(this.coop.FeedFolder)) {
+              thisNode = parent;
+            }
+          }
+        } else {
+          thisNode.destroy();
+          thisNode = parents[0];
+        }
+        // Keep its folder if it's not empty
+        if (thisNode && thisNode.children.enumerate().hasMoreElements()) {
+          thisNode = null;
+        }
+      }
+    }
+    if (this._uninstallRequested) {
+      this.coop.installedContent.destroy();
+    }
+    
+    //this._prefSvc.clearUserPref(this.PREFBASE + "lastInstallTime");
+    this._prefSvc.clearUserPref(this.PREFBASE + "lastversion");
+    this._prefSvc.clearUserPref("browser.startup.homepage");
+  },
+
+  sendPing: function sendPing(pingArg) {
+    var metrics = Cc["@flock.com/metrics-service;1"]
+                  .getService(Ci.flockIMetricsService);
+    pingArg += "?uappid=" + metrics.getUserUUID() + "&version=" + this.version;
+    var xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
+              .createInstance(Ci.nsIXMLHttpRequest);
+    xhr.onload = function MS__sendReportOnLoad(aEvent) { };
+    xhr.onerror = function MS__sendReportOnError(aEvent) { };
+    xhr.backgroundRequest = true;
+    xhr.open("GET", "http://metrics.flock.com/affinity/%EXTENNAME%/" + pingArg);
+    xhr.send(null);
+  },
+
+  wasUserDeleted : function wasUserDeleted(aId) {
+    if (this.coop.installedContent.ids.has(aId)) {
+      // this node has been deleted by the user before this upgrade
+      return true;
+    }
+    this.coop.installedContent.ids.add(aId);
+    return false;
+  },
+
+  addFavorites: function addFavorites(chromePath) {
+    var inst = this;
+    var photoAPI = Cc["@flock.com/photo-api-manager;1?"]
+                  .getService(Ci.flockIPhotoAPIManager);
+    var addBookmarkTo = function addBMTo(aName, aURL, aDescription, aTarget) {
+      if (!aTarget) {
+        aTarget = inst._coop.favorites_root;
+      }
+      // start the id with rdf: in order for the star button to light up
+      var id = aTarget.id() + ":" + aURL;
+      if (id.indexOf("rdf:") != 0) {
+        id = "rdf:" + id;
+      }
+      if (!inst.wasUserDeleted(id)) {
+        var values = {name: aName, URL: aURL, description: aDescription}; 
+        var bookmark = new inst._coop.Bookmark(id, values);
+        //bookmark.datevalue = inst.installTime;
+        aTarget.children.addOnce(bookmark);
+      }
+    }
+    var addMediaQueryTo = function addMQTo(aName, aQuery, aService, aTarget) {
+      var query = new queryHelper(aQuery);
+      var id = "urn:media:favorites:" + aService + ":" + query.stringVal;
+      if (!inst.wasUserDeleted(id)) {
+        // has not been deleted by the user
+        var svc = photoAPI.getAPIFromShortname(aService);
+        var mq = new inst._coop.MediaQuery(id, { service: aService,
+                                                 favicon: svc.icon,
+                                                 query: query.stringVal,
+                                                 name: aName,
+                                                 isPollable: "true"});
+        if (!aTarget) {
+          aTarget = inst._coop.media_favorites;
+        }
+        aTarget.children.addOnce(mq)
+      }
+    }
+    var context = {coop: this.coop,
+                   addMediaQueryTo: addMediaQueryTo,
+                   addBookmarkTo: addBookmarkTo,
+                   affinityName: "%EXTENNAME%"};
+    this.loader.loadSubScript(chromePath, context);
+  },
+
+  loadOPML: function loadOPML(opmlPath) {
+    var inst = this;
+    var listener = {
+      onGetFeed: function(feed, ctxt) {
+        // if feed has been deleted by the user. Do not re-add this feed.
+        return !inst.wasUserDeleted(feed.id());
+      },
+      QueryInterface: function (iid) {
+        if (iid.equals(Ci.flockIOpmlSubscribeListener) ||
+            iid.equals(Ci.nsIClassInfo) ||
+            iid.equals(Ci.nsISupports)) {
+          return this;
+        }
+        throw Cr.NS_ERROR_NO_INTERFACE;
+      },
+      onSubscribe: function onSubscribe(feed, ctxt, progress, progressMax) { },
+      onFinish: function onFinish(ctxt) { },
+      onLoadError: function onLoadError(ctxt, error) { },
+      onError: function onError(url, ctxt, error, progress, progressMax) { },
+      getInterfaces: function getInterfaces(countRef) {
+        var interfaces = [Ci.flockIOpmlSubscribeListener, 
+                          Ci.nsIClassInfo,
+                          Ci.nsISupports];
+        countRef.value = interfaces.length;
+        return interfaces;
+      },
+      getHelperForLanguage: function getHelperForLanguage(language) {
+        return null;
+      },
+      implementationLanguage: Ci.nsIProgrammingLanguage.JAVASCRIPT
+    };
+    feedUtils.loadFeedsFromLocalOPML(opmlPath, listener, null);
+  },
+
+  register : function register() {
+    this._obsSrv.addObserver(this, "em-action-requested", false);
+    this._obsSrv.addObserver(this, "quit-application-granted", false);
+  },
+  unregister : function unregister() {
+    this._obsSrv.removeObserver(this,"em-action-requested");
+    this._obsSrv.removeObserver(this,"quit-application-granted");
+  },
+  observe : function observe(subject, topic, data) {
+    if (topic == "em-action-requested") {
+      subject.QueryInterface(Ci.nsIUpdateItem);
+      if (subject.id == AFFINITY_ID) {
+        if (data == "item-uninstalled") {
+          this._uninstallRequested = true;
+        } else if (data == "item-cancel-action") {
+          this._uninstallRequested = false;
+        }
+      }
+    } else if (topic == "quit-application-granted") {
+      if (this._uninstallRequested) {
+        //this.sendPing("uninstall");
+        this.uninstallContent();
+      }
+      this.unregister();
+    }
+  },
+
+  _getPref: function _getPref(prefName, defaultValue) {
+    var prefSvc = this._prefSvc;
+
+    try {
+      switch (prefSvc.getPrefType(prefName)) {
+        case Ci.nsIPrefBranch.PREF_STRING:
+          return prefSvc.getCharPref(prefName);
+        case Ci.nsIPrefBranch.PREF_INT:
+          return prefSvc.getIntPref(prefName);
+        case Ci.nsIPrefBranch.PREF_BOOL:
+          return prefSvc.getBoolPref(prefName);
+      }
+    }
+    catch (ex) {}
+
+    return defaultValue;
+  },
+
+  QueryInterface: function(aIID) {
+    if (aIID.equals(Ci.nsIObserver) ||
+        aIID.equals(Ci.nsIDOMEventListener) ||
+        aIID.equals(Ci.nsISupports))
+      return this;
+    
+    throw Cr.NS_ERROR_NO_INTERFACE;
+  }
+}
+
+window.addEventListener("load", 
+                        function(e) { 
+                                  %EXTENNAME%ContentPackController.startUp(e) },
+                        false);
+// Only listen to load, since we register for quit-application announcements

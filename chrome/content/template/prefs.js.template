@@ -1,0 +1,5 @@
+pref("flock.affinity.%EXTENNAME%.upgradeURL", "%UPGRADEURL%");
+pref("flock.affinity.%EXTENNAME%.firstRunURL", "%FIRSTRUNURL%");
+pref("flock.affinity.%EXTENNAME%.flockHomepage", "%HOMEPAGEURL%");
+pref("flock.affinity.%EXTENNAME%.lastversion", "firstrun");
+pref("general.useragent.edition", "%EXTENNAME%");

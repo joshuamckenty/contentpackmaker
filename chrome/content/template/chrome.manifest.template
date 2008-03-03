@@ -1,4 +1,5 @@
-overlay chrome://browser/content/browser.xul chrome://%EXTENNAME%/content/browserOverlay.xul
+overlay chrome://browser/content/browser.xul chrome://%EXTENNAME%/content/affinityskin.xul
 
 content  %EXTENNAME%    chrome/content/
-skin     %EXTENNAME%    classic/1.0	chrome/skin/
+skin     %EXTENNAME%    class/1.0	chrome/skin/
+locale   %EXTENNAME%   en-US       locale/en-US/

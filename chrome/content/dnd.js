@@ -23,6 +23,7 @@ var cp_dnd = {
       var contentType = aDropData.dataList[c].dataList[0].flavour.contentType;
 
       switch (contentType) {
+        case "flock/richtreeitem":
         case "moz/rdfitem":
           var uri = aDropData.dataList[c].dataList[0].data;
           cp_controller.add_to_manifest(uri);
@@ -49,6 +50,7 @@ var cp_dnd = {
 
   getSupportedFlavours: function() {
     var flavors = new FlavourSet();
+    flavors.appendFlavour("flock/richtreeitem");
     flavors.appendFlavour("moz/rdfitem");
     flavors.appendFlavour("application/x-moz-file", "nsIFile");
     flavors.appendFlavour("text/x-moz-url");

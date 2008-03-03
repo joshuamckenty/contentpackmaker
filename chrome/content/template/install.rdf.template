@@ -5,7 +5,7 @@
     <em:id>%EXTENID%</em:id>
     <em:name>%EXTENNAME%</em:name>
     <em:version>0.1</em:version>
-    <em:description>Stay up to date on the important stuff</em:description>
+    <em:description>%DESCRIPTION%</em:description>
     <em:creator>Joshua McKenty</em:creator>
     <em:updateURL>https://extensions.flock.com/dist/update.rdf</em:updateURL>    
     <em:homepageURL>https://content.flock.com/%EXTENNAME%/</em:homepageURL>
