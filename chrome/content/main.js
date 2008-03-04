@@ -34,10 +34,14 @@ var cp_controller = {
                         .wrappedJSObject;
     var dropListener =  {
       handleEvent: function(event) {
+        dump("JMC: dropListener handles event 'foo'\n");
         nsDragAndDrop.drop(event, cp_dnd);
       }
     }
-    $('cp_main_dnd_target').addEventListener('dragdrop',  dropListener, true);
+    // $('cp_main_dnd_target').addEventListener('dragdrop',  dropListener, true);
+    // $('cp_main_dnd_target').addEventListener('richtreedrop',  dropListener, true);
+
+    // $('media-streamz').addObserver(streamContainerObserver);
     //JMC TODO - Remove listener, no leaky
     if (cp_prefs.getPrefType("defaultlocation")) {
       cp_controller.set_base_dir(cp_prefs.getCharPref("defaultlocation")); 
@@ -112,6 +116,7 @@ var cp_controller = {
     this.make_dir(basePath);
     this.copy_file(templatePath + "/install.rdf.template", basePath + "/install.rdf", params);
     this.copy_file(templatePath + "/chrome.manifest.template", basePath + "/chrome.manifest", params);
+    this.copy_file(templatePath + "/build.sh.template", basePath + "/build.sh", params, 0700);
     
     
     // JMC - TODO - directory traversal of chrome - possible?
@@ -127,37 +132,43 @@ var cp_controller = {
     this.make_dir(basePath + "/chrome/locale/en-US/profile");
     
     var defaultFavesFile = basePath + "/chrome/locale/en-US/profile/defaultBookmarks.js";
-    this.write_file(defaultFavesFile, this.serialize_manifest("favorites"));
+    this.write_file(defaultFavesFile, this.serialize_manifest("Favorite"));
     var defaultFeedsFile = basePath + "/chrome/locale/en-US/profile/defaultFeeds.opml";
     this.write_file(defaultFeedsFile, this.serialize_opml());
-    this.write_file(basePath + "/chrome/locale/en-US/profile/defaultMedia.js", "");
+    this.write_file(basePath + "/chrome/locale/en-US/profile/defaultMedia.js",  this.serialize_manifest("MediaQuery"));
     
     // Create Skin
-    
+    this.make_dir(basePath + "/chrome/skin");
+    if (this.top_image_path) {
+       
+    }
     // Create Defaults
     
     this.make_dir(basePath + "/defaults");
     this.make_dir(basePath + "/defaults/preferences");
     this.copy_file(templatePath + "/prefs.js.template", basePath + "/defaults/preferences/" + this.cp_name + "-prefs.js", params);
+    
+    alert("Now don't forget to run build.sh in the target directory!");
   },
   
   
-  copy_file: function flock_copyFileTo(aFilePath, aTargetPath, aSubst) {
+  copy_file: function flock_copyFileTo(aFilePath, aTargetPath, aSubst, aFileMode) {
     var contents = getContents(aFilePath);
     if (aSubst) {
       for (x in aSubst) {
        contents = contents.replace( aSubst[x].find, aSubst[x].subst); 
       }
     }
-    this.write_file(aTargetPath, contents);
+    this.write_file(aTargetPath, contents, aFileMode);
   },
   
   // Write to the file system
-  write_file: function(aFilePath, aContents) {
+  write_file: function(aFilePath, aContents, aFileMode) {
     var mode = PR_TRUNCATE;
+    if (!aFileMode) aFileMode = 0600;
     var outfile = cp_getFileFromURL(aFilePath);
     if (!outfile.exists()) {
-      outfile.create(CI.nsIFile.NORMAL_FILE_TYPE, 0600);
+      outfile.create(CI.nsIFile.NORMAL_FILE_TYPE, aFileMode);
     }
     var outStream = CC["@mozilla.org/network/file-output-stream;1"]
                     .createInstance(CI.nsIFileOutputStream);
@@ -186,20 +197,26 @@ var cp_controller = {
     if (coopObj) {
       this.manifest.push(coopObj);
       this.add_manifest_url(coopObj.name, null);
-      if (coopObj.children) {
+      if ((coopObj.isA(cp_controller.faves_coop.Folder) || coopObj.isA(cp_controller.faves_coop.FeedFolder)) && coopObj.children) {
         var childEnum = coopObj.children.enumerate();
         while (childEnum.hasMoreElements()) {
           var child = childEnum.getNext();
          // this.manifest.push(coopObj);
-          this.add_manifest_url(child.name, coopObj);
+          this.add_manifest_url("-- " + child.name, coopObj);
         }
       }
     }
   },
   
-  serialize_single_child: function(aObj, aParent) {
-    return "\naddBookmarkTo(\"" +  aObj.name.replace("&", "&amp;") + "\", \
-       \"" + aObj.URL.replace("&", "&amp;") + "\", null, " + aParent + "); \n";
+  serialize_single_child: {
+    "Favorite": function(aObj, aParent) {
+      return "\naddBookmarkTo(\"" +  aObj.name.replace("&", "&amp;") + "\", \
+         \"" + aObj.URL.replace("&", "&amp;") + "\", null, " + aParent + "); \n";
+    },
+    "MediaQuery": function(aObj, aParent) {
+      return "\addMediaQueryTo(\"" +  aObj.name.replace("&", "&amp;") + "\", \
+         \"" + decodeURIComponent(aObj.query) + "\", '" + aObj.service + "'); \n";
+    }
   },
   
   serialize_single_feed: function(aObj) {
@@ -225,12 +242,14 @@ var cp_controller = {
           var childEnum = coopObj.children.enumerate();
           while (childEnum.hasMoreElements()) {
             var child = childEnum.getNext();
-            outputString += this.serialize_single_child(child, "contentpackfolder" + i);
+            if (child.isInstanceOf(faves_coop[type]))
+              outputString += this.serialize_single_child[type](child, "contentpackfolder" + i);
           }
         }
         
       } else {
-         outputString += this.serialize_single_child(coopObj, "coop.bookmarks_root");
+        if (coopObj.isInstanceOf(faves_coop[type]))
+         outputString += this.serialize_single_child[type](coopObj, "coop.bookmarks_root");
       }
     }
     return outputString;
@@ -238,12 +257,12 @@ var cp_controller = {
   
   serialize_opml: function() {
     var faves_coop = cp_controller.faves_coop;
-    var outputString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?> \
-    <opml version=\"1.0\"> \
-      <head> \
-        <title>Default Feeds</title> \
-      </head> \
-      <body> ";
+    var outputString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n \
+    <opml version=\"1.0\">\n \
+      <head>\n \
+        <title>Default Feeds</title>\n \
+      </head>\n \
+      <body>\n ";
     for (var i=0; i < this.manifest.length; i++) {
       var coopObj = this.manifest[i];
       if (coopObj.isInstanceOf(faves_coop.FeedFolder)) {
@@ -257,12 +276,12 @@ var cp_controller = {
             }
           }
         }
-        outputString += "</outline>";
+        outputString += "</outline>\n";
       } else if (coopObj.isInstanceOf(faves_coop.Feed)) {
           outputString += this.serialize_single_feed(coopObj);
       }
     }
-    outputString += "</body></opml>";
+    outputString += "</body>\n</opml>";
     return outputString;
   },
   

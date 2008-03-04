@@ -2,84 +2,126 @@
 <?xml-stylesheet href="chrome://global/skin/global.css" type="text/css"?>
 <?xml-stylesheet href="chrome://contentpackmaker/content/contentpackmaker.css" type="text/css"?>
 
-
 <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
   title="Content Pack Maker">
-  
+  <script type="application/x-javascript" src="chrome://browser/content/utilityOverlay.js"/>
   <script type="application/x-javascript" src="chrome://global/content/nsDragAndDrop.js"/>
+  <script type="application/x-javascript" src="chrome://global/content/nsTransferable.js"/> 
   <script type="application/x-javascript" src="chrome://contentpackmaker/content/dnd.js"/>
   <script type="application/x-javascript" src="chrome://contentpackmaker/content/main.js"/>
-  <vbox  align="center" pack="center" style="overflow: auto; font-size: 80%;">
-    <spacer flex="1"/>
-    <hbox style="padding: 10px;">
-      <description style="font-size: 200%; ">WELCOME TO CONTENTPACK MAKER! 
-      Simply collect the content you want, and follow the instructions below.</description>
-    </hbox>
-    <spacer flex="1"/>
   
-    <vbox flex="1">
-      <hbox>
-        <description>Where to save the content pack</description>
-        <spacer flex="1"/>
-        <textbox disabled="true" enabled="false" id="cp_base_path"/>
-        <spacer flex="1"/>
-        <button label="pick location" oncommand="cp_controller.show_directory_picker();" id="cp_save_location"/>
-      </hbox>
-        <hbox>
-          <description>The Name of the Pack</description>
-          <spacer flex="1"/>
-          <textbox type="timed" timeout="300" oncommand="cp_controller.set_pack_name(this.value);" id="cp_name"/>
-        </hbox>
-        <hbox>
-          <description>The FIRSTRUN URL</description>
-          <spacer flex="1"/>
-          <textbox type="timed" timeout="300" oncommand="cp_controller.firstrunurl = this.value;" id="cp_firstrun"/>
-        </hbox>
-        <hbox>
-          <description>The UPGRADE URL</description>
-          <spacer flex="1"/>
-          <textbox type="timed" timeout="300" oncommand="cp_controller.upgradeurl = this.value;" id="cp_upgrade"/>
-        </hbox>
-        <hbox>
-          <description>The HOMEPAGE URL</description>
-          <spacer flex="1"/>
-          <textbox type="timed" timeout="300" oncommand="cp_controller.homepageurl = this.value;" id="cp_homepage"/>
-        </hbox>
-        <hbox>
-          <description>Extension DESCRIPTION</description>
-          <spacer flex="1"/>
-          <textbox type="timed" timeout="300" oncommand="cp_controller.exten_description = this.value;" id="cp_description"/>
-        </hbox>
-        <hbox>
-            <description>Pick your top theme image</description> 
-            <spacer flex="1"/>
-            <button label="pick top image" oncommand="cp_controller.show_top_image_picker();" id="cp_save_top_image_location"/>
-        </hbox>
-        <hbox>
-            <description>Pick your bottom theme image</description> 
-            <spacer flex="1"/>
-            <button label="pick bottom image" oncommand="cp_controller.show_bottom_image_picker();" id="cp_save_bottom_image_location"/>
-        </hbox>
-        <!-- JMC TODO AUTHOR NAME AT SOME POINT -->
-      <spacer height="20"/>
-      <hbox>
-        <box id="cp_main_dnd_target" style="min-height: 100px; min-width: 300px; border: 1px dotted gray; margin: 20px;" pack="center" align="center">
-          <description>Drag and Drop stuff here</description>
-        </box>
-        <vbox style="min-height: 100px; min-width: 300px;">
-          <description>Current Manifest</description>
-          <listbox id="cp_manifest"/>
+  <vbox align="stretch" pack="stretch" style="overflow: auto; font-size: 90%;">
+    <spacer flex="1"/>
+    <vbox style="padding: 10px;" align="end">
+      <description style="font-size: 200%; ">WELCOME TO CONTENTPACK MAKER! </description>
+      <description style="font-size: 200%; ">Simply collect the content you want, </description>
+      <description style="font-size: 200%; ">and follow the instructions below.</description>
+    </vbox>
+    <spacer flex="1"/>
+    <hbox flex="1" pack="start" align="start">
+      <spacer width="10"/>
+      <vbox flex="1">
+        <description>Pick Media Streamz</description>
+        
+        <vbox id="media-streamz"
+                   datasources="rdf:flock-favorites"
+                   ref="urn:media:favorites"
+                   sortDirection="ascending"
+                   sortResource="http://home.netscape.com/NC-rdf#Name"
+                   ondraggesture="nsDragAndDrop.startDrag(event, cp_mediaDragObserver);">
+          <template>
+            <rule parent="hbox" />
+            <rule>
+              <conditions>
+                <content uri="?start" />
+                <member container="?start" child="?child" />
+              </conditions>
+              <bindings>
+                <binding subject="?child"
+                         predicate="http://flock.com/rdf#favicon"
+                         object="?favicon" />
+                <binding subject="?child"
+                         predicate="http://home.netscape.com/NC-rdf#Name"
+                         object="?name" />
+              </bindings>
+              <action>
+                <hbox uri="?child" flex="1">
+                    <image class="itemIcon" 
+                           src="?favicon" />
+                    <label class="itemLabel"
+                           crop="end" 
+                           flex="1"
+                           value="?name" />
+                </hbox>
+              </action>
+            </rule>
+          </template>
         </vbox>
-      </hbox>
-      <vbox style="border: 2px dotted red; margin: 20px; padding: 10px;">
-        <description>Actions</description>
+      </vbox>
+      <spacer flex="1"/>
+      <vbox flex="1">
         <hbox>
-          <button label="Save Content Pack" oncommand="cp_controller.write_pack();"/>
-          <button label="Reset Contents" oncommand="alert('implement me!');"/>
+          <description>Where to save the content pack</description>
+          <spacer flex="1"/>
+          <textbox disabled="true" enabled="false" id="cp_base_path"/>
+          <spacer flex="1"/>
+          <button label="pick location" oncommand="cp_controller.show_directory_picker();" id="cp_save_location"/>
+        </hbox>
+          <hbox>
+            <description>The Name of the Pack</description>
+            <spacer flex="1"/>
+            <textbox type="timed" timeout="300" oncommand="cp_controller.set_pack_name(this.value);" id="cp_name"/>
+          </hbox>
+          <hbox>
+            <description>The FIRSTRUN URL</description>
+            <spacer flex="1"/>
+            <textbox type="timed" timeout="300" oncommand="cp_controller.firstrunurl = this.value;" id="cp_firstrun"/>
+          </hbox>
+          <hbox>
+            <description>The UPGRADE URL</description>
+            <spacer flex="1"/>
+            <textbox type="timed" timeout="300" oncommand="cp_controller.upgradeurl = this.value;" id="cp_upgrade"/>
+          </hbox>
+          <hbox>
+            <description>The HOMEPAGE URL</description>
+            <spacer flex="1"/>
+            <textbox type="timed" timeout="300" oncommand="cp_controller.homepageurl = this.value;" id="cp_homepage"/>
+          </hbox>
+          <hbox>
+            <description>Extension DESCRIPTION</description>
+            <spacer flex="1"/>
+            <textbox type="timed" timeout="300" oncommand="cp_controller.exten_description = this.value;" id="cp_description"/>
+          </hbox>
+          <hbox>
+              <description>Pick your top theme image</description> 
+              <spacer flex="1"/>
+              <button label="pick top image" oncommand="cp_controller.show_top_image_picker();" id="cp_save_top_image_location"/>
+          </hbox>
+          <hbox>
+              <description>Pick your bottom theme image</description> 
+              <spacer flex="1"/>
+              <button label="pick bottom image" oncommand="cp_controller.show_bottom_image_picker();" id="cp_save_bottom_image_location"/>
+          </hbox>
+          <!-- JMC TODO AUTHOR NAME AT SOME POINT -->
+        <spacer height="20"/>
+        <hbox>
+          <vbox id="cp_main_dnd_target" style="min-height: 100px; min-width: 300px; border: 1px dotted gray; margin: 20px;" pack="center" align="center" 
+           ondraggesture="nsDragAndDrop.startDrag(event, cp_dnd);" 
+           ondragover="nsDragAndDrop.dragOver(event, cp_dnd);"      
+           ondragdrop="nsDragAndDrop.drop(event, cp_dnd);">
+            <description>Drag and Drop stuff here</description>
+              <description>Current Manifest</description>
+              <listbox id="cp_manifest"/>
+          </vbox>
+          <vbox style="min-height: 100px; min-width: 300px; border: 2px dotted red; margin: 20px; padding: 10px;">
+        
+              <description>Actions</description>
+                <button label="Save Content Pack" oncommand="cp_controller.write_pack();"/>
+                <button label="Reset Contents" oncommand="alert('implement me!');"/>
+          </vbox>
         </hbox>
       </vbox>
-    
-    </vbox>
+    </hbox>
     <spacer flex="1"/>
   </vbox>
 </window>
