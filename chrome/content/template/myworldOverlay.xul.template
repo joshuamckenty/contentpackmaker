@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet href="chrome://%EXTENNAME%/content/affinityskin.css" 
+                 type="text/css"?>
+<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" id="%EXTENNAME%-myworld-overlay"/>

@@ -14,10 +14,10 @@
 //
 // END FLOCK GPL
 
-var AFFINITY_ID = "%EXTENNAME%@contentpack.flock";
-const SHOW_DELAY = 500;
 
 var %EXTENNAME%ContentPackController = {
+  AFFINITY_ID: "%EXTENNAME%@contentpack.flock",
+  SHOW_DELAY: 500,
   PREFBASE: "flock.affinity.%EXTENNAME%.",
   _uninstallRequested : false,
   _prefSvc: Cc["@mozilla.org/preferences-service;1"]
@@ -26,11 +26,11 @@ var %EXTENNAME%ContentPackController = {
            .getService(Ci.nsIObserverService),
   version: Cc["@mozilla.org/extensions/manager;1"]
            .getService(Ci.nsIExtensionManager)
-           .getItemForID(AFFINITY_ID).version,
+           .getItemForID("%EXTENNAME%@contentpack.flock").version,
 
   startUp: function startUp() {
     if (!this.version) {
-      throw "Unknown affinity ID: " + AFFINITY_ID;
+      throw "Unknown affinity ID: " + this.AFFINITY_ID;
     }
     this.register();
   
@@ -50,7 +50,7 @@ var %EXTENNAME%ContentPackController = {
       pageURL = this._getPref(this.PREFBASE + "upgradeURL");
     }
     if (pageURL) {
-      setTimeout(function(){window.openUILinkIn(pageURL, "tab")}, SHOW_DELAY);
+      setTimeout(function(){window.openUILinkIn(pageURL, "tab")}, this.SHOW_DELAY);
     }
     
     this._prefSvc.setCharPref(this.PREFBASE + "lastversion", this.version);
@@ -81,7 +81,7 @@ var %EXTENNAME%ContentPackController = {
 
       var contentCoop = "/content/contentpack-coop.js";
       this._coop.addSchema("chrome://%EXTENNAME%" + contentCoop);
-      this._coop.installedContent = new this._coop.ContentNode(AFFINITY_ID);
+      this._coop.installedContent = new this._coop.ContentNode(this.AFFINITY_ID);
     }
     return this._coop;
   },
@@ -254,7 +254,7 @@ var %EXTENNAME%ContentPackController = {
   observe : function observe(subject, topic, data) {
     if (topic == "em-action-requested") {
       subject.QueryInterface(Ci.nsIUpdateItem);
-      if (subject.id == AFFINITY_ID) {
+      if (subject.id == this.AFFINITY_ID) {
         if (data == "item-uninstalled") {
           this._uninstallRequested = true;
         } else if (data == "item-cancel-action") {

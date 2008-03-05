@@ -1,5 +1,4 @@
 overlay chrome://browser/content/browser.xul chrome://contentpackmaker/content/browserOverlay.xul
-overlay chrome://flock/content/feeds/newsSidebar.xul chrome://contentpackmaker/content/newsSidebarOverlay.xul
 
 content  contentpackmaker    chrome/content/
 skin     contentpackmaker    classic/1.0	chrome/skin/

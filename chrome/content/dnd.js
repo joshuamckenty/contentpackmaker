@@ -23,29 +23,29 @@ var cp_mediaDragObserver = {
 
 var cp_dnd = {
 
-  canHandleMultipleItems: false,
+  canHandleMultipleItems: true,
   onDragOver: function(event, aFlavor, aSession) {
    dump("OnDragOver");
   },
   onDrop: function(aEvent, aDropData, aSession) {
     dump("JMC: Dropped on cp_dnd");
     aEvent.stopPropagation();
-    // for (var c = 0; c < aDropData.dataList.length; c++) {
+    for (var c = 0; c < aDropData.dataList.length; c++) {
     //  var supports = aDropData.dataList[c].dataList[0].supports;
-    //  var contentType = aDropData.dataList[c].dataList[0].flavour.contentType;
-      var contentType = aDropData.flavour.contentType;
+    var contentType = aDropData.dataList[c].dataList[0].flavour.contentType;
+      // var contentType = aDropData.flavour.contentType;
       switch (contentType) {
         case "flock/richtreeitem":
         case "moz/rdfitem":
-          // var uri = aDropData.dataList[c].dataList[0].data;
-          var uri = aDropData.data;
+          var uri = aDropData.dataList[c].dataList[0].data;
+          // var uri = aDropData.data;
           // alert("got uri of " + uri + "\n");
           cp_controller.add_to_manifest(uri);
           break;
         case "application/x-moz-file":
           var file = Components.classes["@mozilla.org/file/local;1"]
             .createInstance(Components.interfaces.nsILocalFile);
-            file.initWithPath( aDropData.data.path );
+            file.initWithPath( aDropData.dataList[c].dataList[0].data.path );
             cp_controller.receive_file(file);
           break;
         case "text/x-moz-url":
@@ -57,7 +57,7 @@ var cp_dnd = {
           alert('add handler for: ' + contentType);
           break;
       }
-    // }
+    }
   },
 
   getSupportedFlavours: function() {

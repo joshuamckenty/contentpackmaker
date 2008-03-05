@@ -80,6 +80,11 @@
           <textbox type="timed" timeout="300" oncommand="cp_controller.set_pack_name(this.value);" id="cp_name"/>
         </hbox>
         <hbox>
+          <description>Extension DESCRIPTION</description>
+          <spacer flex="1"/>
+          <textbox type="timed" timeout="300" oncommand="cp_controller.exten_description = this.value;" id="cp_description"/>
+        </hbox>
+        <hbox>
           <description>The FIRSTRUN URL</description>
           <spacer flex="1"/>
           <textbox type="timed" timeout="300" oncommand="cp_controller.firstrunurl = this.value;" id="cp_firstrun"/>
@@ -94,16 +99,6 @@
           <spacer flex="1"/>
           <textbox type="timed" timeout="300" oncommand="cp_controller.homepageurl = this.value;" id="cp_homepage"/>
         </hbox>
-        <hbox>
-          <description>Extension DESCRIPTION</description>
-          <spacer flex="1"/>
-          <textbox type="timed" timeout="300" oncommand="cp_controller.exten_description = this.value;" id="cp_description"/>
-        </hbox>
-        <hbox>
-            <description>Pick your top theme image</description> 
-            <spacer flex="1"/>
-            <button label="pick top image" oncommand="cp_controller.show_top_image_picker();" id="cp_save_top_image_location"/>
-        </hbox>
       </vbox>
       <spacer flex="2"/>
     </hbox>
@@ -111,7 +106,10 @@
     <spacer height="20"/>
     <hbox>
 
-      <vbox style="min-height: 100px; min-width: 300px; border: 2px dotted red; margin: 20px; padding: 10px;">
+      <vbox style="min-height: 100px; min-width: 300px; border: 2px dotted red; margin: 20px; padding: 10px;" 
+       ondraggesture="nsDragAndDrop.startDrag(event, cp_dnd);" 
+       ondragover="nsDragAndDrop.dragOver(event, cp_dnd);"      
+       ondragdrop="nsDragAndDrop.drop(event, cp_dnd);">
           <description>Current Manifest</description>
           <listbox id="cp_manifest"/>
       </vbox>

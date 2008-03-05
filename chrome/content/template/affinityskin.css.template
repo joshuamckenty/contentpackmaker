@@ -143,3 +143,8 @@ statusbar[affinityskin] {
 #main-window[_affinityskin-dark-style*="status"] > statusbar {
   color: white !important;
 }
+
+
+#headerSection.headerArea {
+  background-image: url("chrome://%EXTENNAME%/skin/myworld-header.jpg");
+}

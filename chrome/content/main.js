@@ -75,6 +75,11 @@ var imageRules = {
        // 
      }
    },
+   "myworld-header-color.png" : {
+      chrome: "chrome://flock/skin/start/myworld-header-color.png",
+      apply: function(win, aPath) { 
+      } 
+   }
 }
 
 
@@ -143,6 +148,7 @@ var cp_controller = {
     this.copy_file(templatePath + "/contentpack.js.template", basePath + "/chrome/content/contentpack.js", params);
     this.copy_file(templatePath + "/contentpack-coop.js.template", basePath + "/chrome/content/contentpack-coop.js", params);
     this.copy_file(templatePath + "/affinityskin.xul.template", basePath + "/chrome/content/affinityskin.xul", params);
+    // this.copy_file(templatePath + "/myworldOverlay.xul.template", basePath + "/chrome/content/myworldOverlay.xul", params);
     this.copy_file(templatePath + "/affinityskin.css.template", basePath + "/chrome/content/affinityskin.css", params);
     
     this.make_dir(basePath + "/chrome/locale");
@@ -164,7 +170,6 @@ var cp_controller = {
        existingImage.remove(false); 
       }
       fileObj.file.copyTo(skinDir, fileObj.filename);
-      dump("JMC: Make chrome for : " + imageRules[fileObj.filename].chrome + "?\n");
       if (imageRules[fileObj.filename].chrome != "") {
         this.append_to( basePath + "/chrome.manifest", this.make_chrome_override(fileObj.filename));
       }
@@ -225,7 +230,7 @@ var cp_controller = {
   
   make_chrome_override: function(aFileName) {
     var aImageObj = imageRules[aFileName];
-    return "override " + aImageObj.chrome  + " chrome://" + this.cp_name + "/skin/" + aFileName;
+    return "override " + aImageObj.chrome  + " chrome://" + this.cp_name + "/skin/" + aFileName + "\n";
   },
   
   add_manifest_url: function (aUrl, aParent) {
