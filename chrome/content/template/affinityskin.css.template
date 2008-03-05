@@ -1,0 +1,145 @@
+/*
+  BEGIN FLOCK GPL
+
+  Copyright Flock Inc. 2005-2008
+  http://flock.com
+
+  This file may be used under the terms of the
+  GNU General Public License Version 2 or later (the "GPL"),
+  http://www.gnu.org/licenses/gpl.html
+
+  Software distributed under the License is distributed on an "AS IS" basis,
+  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+  for the specific language governing rights and limitations under the
+  License.
+
+  END FLOCK GPL
+*/
+
+#main-window[affinityskin] {
+  -moz-appearance: none;
+  background-repeat: repeat-x;
+  background-position: top left;
+  background-image: url("chrome://%EXTENNAME%/skin/tbox-default.jpg");
+}
+
+#main-window[affinityskin] #urlbar {
+  opacity: 0.8;
+}
+
+#main-window[affinityskin] #searchbar {
+  opacity: 0.8;
+}
+
+#main-window[affinityskin] toolbox {
+  -moz-appearance: none !important;
+  background-color: transparent !important;
+  background-position: top right;
+  background-image: none !important; /* flock-specific */
+  border-top: 0;
+}
+
+#main-window[affinityskin] toolbar:not([id="FindToolbar"]), toolbarpalette {
+  -moz-appearance: none !important;
+  background-image: none !important; /* mac-specific */
+  background-repeat: no-repeat !important;  /* mac-specific */
+  background-color: transparent !important; /* mac-specific */
+  border-bottom-color: transparent !important;
+  border-top-color: transparent !important;
+} 
+
+#main-window[affinityskin] toolbar:first-child, menubar {
+  border-bottom-color: transparent;
+}
+
+#main-window[affinityskin] toolbarbutton:not([class="tab-close-button"]) { 
+  -moz-appearance: none !important;
+  background-color: transparent !important;
+  background-repeat: no-repeat !important; 
+} 
+
+/* windows-specific tabs */
+#main-window[affinityskin] .tabbrowser-tabs {
+  background-color: transparent !important;
+  background-image: none !important; 
+}
+
+#main-window[affinityskin] .tabbrowser-tab {
+  background-color: transparent !important;
+  background-image: none !important;
+  opacity: 0.85 !important;
+}
+
+#main-window[affinityskin] .tabbrowser-strip {
+  -moz-appearance: none; /* mac-specific */
+}
+
+/* Flock-specific hacks */
+#main-window[affinityskin] #personal-bookmarks,
+#main-window[affinityskin] #bookmarks-stack
+{
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+
+/* Personal Toolbar/Flockbar Styling */
+#main-window[affinityskin] #PersonalToolbar {
+  padding-left: 0px !important;
+}
+#main-window[affinityskin] #PersonalToolbar > toolbarbutton,
+#main-window[affinityskin] #PersonalToolbar > toolbaritem:not(#personal-bookmarks) {
+ /* background-image: url("chrome://browser/skin/personal-toolbar-bg.png") !important; */
+  background-repeat: repeat-x !important;
+  margin: 0px;
+  padding-left: 1px !important;
+  padding-right: 1px !important;
+}
+
+#main-window[affinityskin] #PersonalToolbar > toolbarseparator {
+ /*  background-image: url("chrome://myspacepack/skin/flockbar-separator.png") !important; */
+  background-repeat: no-repeat !important;
+  width: 5px !important;
+  margin: 0px;
+}
+
+#main-window[affinityskin] #personal-bookmarks {
+ /*  background-image: url("chrome://myspacepack/skin/sub-bar-end.png") !important; */
+ background-image: none !important;
+}
+
+#main-window[affinityskin] #PersonalToolbar > #personal-bookmarks > stack {
+  /* background-image: url("chrome://myspacepack/skin/personal-bar-bg.png") !important; */
+  background-repeat: repeat-x !important;
+}
+
+
+/* status bar */
+statusbar[affinityskin] {
+  -moz-appearance: none;
+
+  border-bottom: 0 !important;
+
+  background-repeat: no-repeat;
+  background-position: top left;
+  background-color: transparent;
+  
+  background-image: url("chrome://%EXTENNAME%/skin/stbar-default.jpg");
+}
+
+#main-window[affinityskin] statusbarpanel {
+  -moz-appearance: none !important;
+  border: 0 !important;
+}
+
+#main-window[_affinityskin-dark-style*="both"] #navigator-toolbox menubar > menu,
+#main-window[_affinityskin-dark-style*="both"] #navigator-toolbox toolbarbutton,
+#main-window[_affinityskin-dark-style*="both"] > statusbar,
+#main-window[_affinityskin-dark-style*="true"] #navigator-toolbox menubar > menu,
+#main-window[_affinityskin-dark-style*="true"] #navigator-toolbox toolbarbutton,
+#main-window[_affinityskin-dark-style*="true"] > statusbar,
+#main-window[_affinityskin-dark-style*="toolbox"] #navigator-toolbox menubar > menu,
+#main-window[_affinityskin-dark-style*="toolbox"] #navigator-toolbox toolbarbutton,
+#main-window[_affinityskin-dark-style*="status"] > statusbar {
+  color: white !important;
+}

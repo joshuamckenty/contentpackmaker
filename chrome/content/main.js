@@ -24,25 +24,71 @@ var cp_prefs = Components.classes['@mozilla.org/preferences-service;1']
 
 function $(x) { return document.getElementById(x); }
 
+// JMC TODO:
+/*
+
+Support for default toolbar sets
+Support for preferences settings as well (extended set)
+Extended CSS hacking? Perhaps w/ firebug integration
+Multi-file DND
+Support for more DND flavours (URL, FF3 data types, etc).
+
+*/
+
+var imageRules = {
+ "stbar-default.jpg"  : {
+   chrome: "",
+   apply: function (win, aPath) {
+     var statusbars = win.document.getElementsByTagName("statusbar"); 
+     for (var i = 0; i < statusbars.length; i++) { 
+         statusbars[i].setAttribute("style", "background-image: url(file://" + aPath + ");");
+         statusbars[i].setAttribute("affinityskin", "true");
+     }
+   }
+ },
+ "tbox-default.jpg"  : {
+    chrome: "",
+    apply: function (win, aPath) {
+      var mainwin = win.document.getElementById('main-window');
+      mainwin.setAttribute("style", "background-image: url(file://" + aPath + ");"); 
+      mainwin.setAttribute("affinityskin", "true");
+    }
+  },
+  "mecardUpperBackground.png"  : {
+    chrome: "chrome://flock/skin/people/mecardUpperBackground.png",
+    apply: function (win, aPath) {
+       /*
+       var sidebar = win.document.getElementById("sidebar").contentDocument;
+       dump("JMC: Think I got sidebar, it's " + sidebar.documentElement + "\n");
+       if (sidebar.documentElement.id == "peopleSidebar") {
+         var peopleTabs = sidebar.getElementById("peopleServiceTabs");
+         var peoplePanel = sidebar.getAnonymousElementByAttribute(peopleTabs, "anonid", "mecard-info-panel"); 
+              peoplePanel.setAttribute("style", "background-image: url(file://" + aPath + ");");
+          // }
+       }
+       */
+    }
+  },
+  "main-nav-bg.png"  : {
+     chrome: "chrome://flock/skin/start/main-nav-bg.png",
+     apply: function (win, aPath) {
+       // 
+     }
+   },
+}
+
+
+
 var cp_controller = {
   manifest: [],
+  fileList: [],
   init: function() {
     dump("JMC: Init'ing cp_controller\n");
     cp_controller.faves_coop = CC["@flock.com/singleton;1"]
                         .getService(CI.flockISingleton)
                         .getSingleton("chrome://flock/content/common/load-faves-coop.js")
                         .wrappedJSObject;
-    var dropListener =  {
-      handleEvent: function(event) {
-        dump("JMC: dropListener handles event 'foo'\n");
-        nsDragAndDrop.drop(event, cp_dnd);
-      }
-    }
-    // $('cp_main_dnd_target').addEventListener('dragdrop',  dropListener, true);
-    // $('cp_main_dnd_target').addEventListener('richtreedrop',  dropListener, true);
-
-    // $('media-streamz').addObserver(streamContainerObserver);
-    //JMC TODO - Remove listener, no leaky
+  
     if (cp_prefs.getPrefType("defaultlocation")) {
       cp_controller.set_base_dir(cp_prefs.getCharPref("defaultlocation")); 
     }
@@ -55,43 +101,15 @@ var cp_controller = {
   show_directory_picker: function() {
      var fp = CC["@mozilla.org/filepicker;1"].createInstance(CI.nsIFilePicker);
      fp.init(window, "Where to save your contentpack", CI.nsIFilePicker.modeGetFolder);
-     // fp.appendFilters(nsIFilePicker.filterAll | nsIFilePicker.filterText);
-
      var rv = fp.show();
      if (rv == CI.nsIFilePicker.returnOK || rv == CI.nsIFilePicker.returnReplace) {
        var file = fp.file;
-       // Get the path as string. Note that you usually won't 
-       // need to work with the string paths.
        var path = fp.file.path;
-       // work with returned nsILocalFile...
        this.set_base_dir(path);
      }
   },
-  
-  show_top_image_picker: function () {
-     var fp = CC["@mozilla.org/filepicker;1"].createInstance(CI.nsIFilePicker);
-     fp.init(window, "Pick your top image", CI.nsIFilePicker.modeOpen);
-     var rv = fp.show();
-     if (rv == CI.nsIFilePicker.returnOK) {
-       var file = fp.file;
-       var path = fp.file.path;
-       this.top_image_path = path;
-     }
-  },
-  
-  show_bottom_image_picker: function () {
-     var fp = CC["@mozilla.org/filepicker;1"].createInstance(CI.nsIFilePicker);
-     fp.init(window, "Pick your bottom image", CI.nsIFilePicker.modeOpen);
-     var rv = fp.show();
-     if (rv == CI.nsIFilePicker.returnOK) {
-       var file = fp.file;
-       var path = fp.file.path;
-       this.bottom_image_path = path;
-     }
-  },
-  
   set_pack_name: function(aName) {
-    cp_controller.cp_name = aName.replace(" ", "-");
+    cp_controller.cp_name = aName.replace(" ", "-").toLowerCase();
     cp_prefs.setCharPref("defaultpackname", cp_controller.cp_name);
     $('cp_name').value = cp_controller.cp_name;
   },
@@ -138,10 +156,20 @@ var cp_controller = {
     this.write_file(basePath + "/chrome/locale/en-US/profile/defaultMedia.js",  this.serialize_manifest("MediaQuery"));
     
     // Create Skin
-    this.make_dir(basePath + "/chrome/skin");
-    if (this.top_image_path) {
-       
+    var skinDir = this.make_dir(basePath + "/chrome/skin");
+    for(var i=0; i < this.fileList.length; i++) {
+      var fileObj = this.fileList[i];
+      var existingImage = cp_getFileFromURL(basePath + "/chrome/skin/" + fileObj.filename);
+      if (existingImage.exists()) {
+       existingImage.remove(false); 
+      }
+      fileObj.file.copyTo(skinDir, fileObj.filename);
+      dump("JMC: Make chrome for : " + imageRules[fileObj.filename].chrome + "?\n");
+      if (imageRules[fileObj.filename].chrome != "") {
+        this.append_to( basePath + "/chrome.manifest", this.make_chrome_override(fileObj.filename));
+      }
     }
+
     // Create Defaults
     
     this.make_dir(basePath + "/defaults");
@@ -177,12 +205,27 @@ var cp_controller = {
     outStream.write(aContents, aContents.length);
     outStream.close();
   },
+  // JMC TODO - Refactor this into the above
+  append_to: function (aFilePath, aContents) {
+    var outfile = cp_getFileFromURL(aFilePath);
+    var outStream = CC["@mozilla.org/network/file-output-stream;1"]
+                    .createInstance(CI.nsIFileOutputStream);
+    outStream.init(outfile, PR_WRONLY | PR_CREATE_FILE | PR_APPEND, 0600, 0);
+    outStream.write(aContents, aContents.length);
+    outStream.close();
+  },
   
   make_dir: function(aPath) {
     var outfile = cp_getFileFromURL(aPath);
     if (!outfile.exists()) {
       outfile.create(CI.nsIFile.DIRECTORY_TYPE, 0600);
     }
+    return outfile;
+  },
+  
+  make_chrome_override: function(aFileName) {
+    var aImageObj = imageRules[aFileName];
+    return "override " + aImageObj.chrome  + " chrome://" + this.cp_name + "/skin/" + aFileName;
   },
   
   add_manifest_url: function (aUrl, aParent) {
@@ -205,6 +248,21 @@ var cp_controller = {
           this.add_manifest_url("-- " + child.name, coopObj);
         }
       }
+    }
+  },
+  
+  receive_file: function(aFile) {
+    dump("JMC: Got drop of file with path " + aFile.path + "\n");
+    var fileBits = aFile.path.split("/");
+    var fileName = fileBits.pop();
+    dump("JMC: Think filename is " + fileName + "\n");
+    if (imageRules[fileName]) {
+      this.add_manifest_url("* - " + aFile.path);
+      var win = getTopBrowserWindow();
+      if (win) {
+        imageRules[fileName].apply(win, aFile.path); 
+      }
+      this.fileList.push({filename: fileName, file: aFile});
     }
   },
   
@@ -234,10 +292,11 @@ var cp_controller = {
           outputString += "\nvar contentpackfolder" + i + " = coop.toolbar.folder;\n\n"; 
         } else {
           outputString += "\nvar contentpackfolder" + i + 
-          " = new coop.Folder(\"" + coopObj.id()   + "\"); \
+          " = new coop.Folder(); \
           \ncontentpackfolder" + i + ".name = '" + coopObj.name   + "'; \
           \ncoop.bookmarks_root.children.addOnce(contentpackfolder" + i + "); \n\n";
         }
+        // \"" + coopObj.id()   + "\"
         if (coopObj.children) {
           var childEnum = coopObj.children.enumerate();
           while (childEnum.hasMoreElements()) {
@@ -257,8 +316,7 @@ var cp_controller = {
   
   serialize_opml: function() {
     var faves_coop = cp_controller.faves_coop;
-    var outputString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n \
-    <opml version=\"1.0\">\n \
+    var outputString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<opml version=\"1.0\">\n \
       <head>\n \
         <title>Default Feeds</title>\n \
       </head>\n \
@@ -281,13 +339,19 @@ var cp_controller = {
           outputString += this.serialize_single_feed(coopObj);
       }
     }
-    outputString += "</body>\n</opml>";
+    outputString += "</body>\n</opml>\n";
     return outputString;
   },
   
   //TODO - Loading method
 }
 
+function getTopBrowserWindow() {
+  var wm = CC["@mozilla.org/appshell/window-mediator;1"]
+           .getService(CI.nsIWindowMediator);
+  var win = wm.getMostRecentWindow("navigator:browser");
+  return win;
+}
 
 function flock_getChromeFile(aChromeURL) {
   return getFileInternal(aChromeURL);

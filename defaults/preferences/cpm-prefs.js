@@ -1,2 +1,2 @@
 pref("extensions.contentpackmaker.defaultlocation", "~/Desktop");
-pref("extensions.contentpackmaker.defaultpackname", "Clayton");
+pref("extensions.contentpackmaker.defaultpackname", "clayton");

@@ -1,6 +1,3 @@
-// Copyright Jesse Andrews, 2005-2008
-// http://overstimulate.com
-//
 // This file may be used under the terms of of the
 // GNU General Public License Version 2 or later (the "GPL"),
 // http://www.gnu.org/licenses/gpl.html
@@ -28,10 +25,10 @@ var cp_dnd = {
 
   canHandleMultipleItems: false,
   onDragOver: function(event, aFlavor, aSession) {
-   // alert("OnDragOver");
+   dump("OnDragOver");
   },
   onDrop: function(aEvent, aDropData, aSession) {
-    // alert("JMC: Dropped on cp_dnd");
+    dump("JMC: Dropped on cp_dnd");
     aEvent.stopPropagation();
     // for (var c = 0; c < aDropData.dataList.length; c++) {
     //  var supports = aDropData.dataList[c].dataList[0].supports;
@@ -48,8 +45,8 @@ var cp_dnd = {
         case "application/x-moz-file":
           var file = Components.classes["@mozilla.org/file/local;1"]
             .createInstance(Components.interfaces.nsILocalFile);
-          file.initWithPath( aDropData.dataList[c].dataList[0].data.path );
-
+            file.initWithPath( aDropData.data.path );
+            cp_controller.receive_file(file);
           break;
         case "text/x-moz-url":
           var url = aDropData.dataList[c].dataList[0].data;
@@ -67,7 +64,7 @@ var cp_dnd = {
     var flavors = new FlavourSet();
     flavors.appendFlavour("flock/richtreeitem");
     flavors.appendFlavour("moz/rdfitem");
-    
+    flavors.appendFlavour("application/x-moz-file", "nsIFile");
     return flavors;
   }
 }

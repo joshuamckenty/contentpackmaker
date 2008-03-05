@@ -1,5 +1,5 @@
 overlay chrome://browser/content/browser.xul chrome://%EXTENNAME%/content/affinityskin.xul
 
-content  %EXTENNAME%    chrome/content/
-skin     %EXTENNAME%    class/1.0	chrome/skin/
-locale   %EXTENNAME%   en-US       locale/en-US/
+content  %EXTENNAME%    jar:chrome/%EXTENNAME%.jar!/content/
+skin     %EXTENNAME%    class/1.0	jar:chrome/%EXTENNAME%.jar!/skin/
+locale   %EXTENNAME%   en-US       jar:chrome/%EXTENNAME%.jar!/locale/en-US/
