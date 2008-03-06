@@ -116,6 +116,7 @@
       <vbox>
         <description>Actions</description>
         <button label="Save Content Pack" oncommand="cp_controller.write_pack();"/>
+        <button label="Save Manifest File" oncommand="cp_controller.save_manifest_file();"/>
         <button label="Reset Contents" oncommand="alert('implement me!');"/>
       </vbox>
     </hbox>

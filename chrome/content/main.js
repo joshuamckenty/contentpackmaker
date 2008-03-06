@@ -104,6 +104,9 @@ var cp_controller = {
   },
   
   show_directory_picker: function() {
+    while ($('cp_manifest').firstChild) {
+      $('cp_manifest').removeChild($('cp_manifest').lastChild);
+     }
      var fp = CC["@mozilla.org/filepicker;1"].createInstance(CI.nsIFilePicker);
      fp.init(window, "Where to save your contentpack", CI.nsIFilePicker.modeGetFolder);
      var rv = fp.show();
@@ -111,6 +114,12 @@ var cp_controller = {
        var file = fp.file;
        var path = fp.file.path;
        this.set_base_dir(path);
+       var manifestFile = cp_getFileFromURL(path + "/manifest.js");
+       if (manifestFile.exists()) {
+         this.load_manifest_file(manifestFile.path); 
+       }
+       
+       // JMC - Off by one on the directory, here
      }
   },
   set_pack_name: function(aName) {
@@ -284,6 +293,39 @@ var cp_controller = {
   
   serialize_single_feed: function(aObj) {
     return "<outline type=\"rss\" text=\"" + aObj.name +"\" title=\"" + aObj.name + "\" xmlUrl=\"" + aObj.URL.replace("&", "&amp;")  + "\"/>\n";
+  },
+  
+  save_manifest_file: function() {
+    // this.manifest
+    
+    var interestingProps = ["name", "URL", "query", "service"];
+    var outputString = "";
+    outputString += "cp_controller.manifest = [];\n";
+    for (var i =0; i <this.manifest.length; i++) {
+      var item = this.manifest[i];
+      outputString += "cp_controller.add_to_manifest(\"" + item.id() + "\\nsecondline\");\n";
+    }
+    dump("JMC: serialized manifest looks like: \n" + outputString + "\n");
+    
+    
+    // this.fileList
+    outputString += "cp_controller.fileList = [];\n";
+    for (var i =0; i <this.fileList.length; i++) {
+      var item = this.fileList[i];
+      outputString += "cp_controller.receive_file(cp_getFileFromURL(\"" + this.fileList[i].file.path + "\"));\n";
+    }
+    dump("JMC: serialized manifest looks like: \n" + outputString + "\n");
+    var basePath = this.cp_path + "/" + this.cp_name;
+    this.make_dir(basePath);
+    this.write_file(basePath + "/manifest.js", outputString);
+    // URLS and description bits
+    
+  },
+  
+  load_manifest_file: function(aFilePath) {
+      var loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
+                                .getService(Components.interfaces.mozIJSSubScriptLoader);
+      loader.loadSubScript("file://" + aFilePath, window);
   },
   
   serialize_manifest: function(type) {
