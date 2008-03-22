@@ -1,0 +1,135 @@
+/**
+ * BEGIN FLOCK GPL
+ *
+ * Copyright Flock Inc. 2005-2008
+ * http://flock.com
+ *
+ * This file may be used under the terms of the
+ * GNU General Public License Version 2 or later (the "GPL"),
+ * http://www.gnu.org/licenses/gpl.html
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ *
+ * END FLOCK GPL
+ */
+
+#stack {
+  margin: 10px;
+  border: 1px solid #cccccc;
+}
+
+#desktop > vbox, #desktop > stack > vbox {
+  border: 1px solid #cccccc;
+}
+
+#add {
+  width: 40px;
+  height: 30px;
+  margin: 0;
+  padding: 0px;
+}
+
+#add > label {
+  margin: 0;
+  padding: 0;
+}
+
+.column {
+  min-width: 40px;
+}
+
+splitter {
+  border: 1px solid #ffffff;
+  background-color: #ffffff;
+  max-width: 2px;
+}
+
+
+.header {
+  height: 20px;
+  background-color: #cc0000;
+  display: none;
+}
+
+.column:hover .header {
+  display: block;
+}
+
+box.widget {
+  -moz-binding: url("chrome://flock/content/start/widgets.xml#widget");
+}
+
+sitestream {
+  -moz-binding: url("chrome://flock/content/start/widgets.xml#myworld-sitestream");
+}
+
+feedstream {
+  -moz-binding: url("chrome://flock/content/start/widgets.xml#myworld-feedstream");
+}
+
+feeditem {
+  -moz-binding: url("chrome://flock/content/start/widgets.xml#myworld-feeditem");
+}
+
+mediaquery {
+  -moz-binding: url("chrome://flock/content/start/widgets.xml#myworld-mediastream");
+}
+
+mediaitem {
+  -moz-binding: url("chrome://flock/content/start/widgets.xml#myworld-mediaitem");
+}
+
+friendfeeditem {
+  -moz-binding: url("chrome://flock/content/start/widgets.xml#myworld-friend-feed-item");
+}
+
+wrappingDescription {
+  -moz-binding: url("chrome://flock/content/bindings/wrappingDescription.xml#wrappingDescription");
+}
+
+#leftPane,
+#mePane,
+#newsPane,
+#rightPane,
+#peoplePane,
+#startPageLayout {
+  border: 1px dotted #cc0000;
+}
+
+#accountsPane {
+  border: 1px solid #000000;
+}
+
+#mediaPaneContent {
+  float: left;
+  background: #ffffff;
+  text-align: center;
+  padding: 5px;
+}
+
+#mediaPaneContent image {
+  min-width: 81px;
+  max-width: 81px;
+  padding: 2px;
+  margin: 3px;
+  background: #ffffff;
+  border: 1px solid #000000;
+  float: left;
+  cursor: pointer;
+}
+
+#headerSection.headerArea {
+  background-image: url("chrome://%EXTENNAME%/skin/myworld-header-color.png");
+}
+
+.navbar_controls {
+  border-top-width: 0px !important; 
+}
+
+.titleMyWorldInput,
+.titleMyWorldInput .textbox-input { 
+  background-image: url("chrome://%EXTENNAME%/skin/myworld-header-color.png");
+}

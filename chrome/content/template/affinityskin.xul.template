@@ -10,10 +10,12 @@
   <script type="application/x-javascript" 
           src="chrome://flock/content/feeds/feedUtils.js"/>
   <script type="application/x-javascript" 
-          src="chrome://flock/content/photo/photoAPI.js"/>          
+          src="chrome://flock/content/photo/photoAPI.js"/>
+  <script type="application/x-javascript" 
+          src="chrome://browser/content/flock/photo/photoAPI.js"/>
 	<script type="application/x-javascript" 
 	        src="chrome://%EXTENNAME%/content/contentpack.js"/>
-			
+
   <stringbundleset id="stringbundleset">
     <stringbundle id="%EXTENNAME%ContentPackStringBundle"
                   src="chrome://%EXTENNAME%/locale/affinityskin.properties"/>
@@ -21,5 +23,6 @@
 
 	<window id="main-window" affinityskin="true"></window>
 	<statusbar id="status-bar" affinityskin="true"></statusbar> 
-
+  <toolbar id="nav-bar" defaultset="%MAINTOOLBAR%" context="toolbar-context-menu" />
+  <toolbar id="PersonalToolbar" defaultset="%PTOOLBAR%" context="toolbar-context-menu" />
 </overlay>

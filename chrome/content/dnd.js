@@ -28,30 +28,21 @@ var cp_dnd = {
    dump("OnDragOver");
   },
   onDrop: function(aEvent, aDropData, aSession) {
-    dump("JMC: Dropped on cp_dnd");
     aEvent.stopPropagation();
     for (var c = 0; c < aDropData.dataList.length; c++) {
-    //  var supports = aDropData.dataList[c].dataList[0].supports;
-    var contentType = aDropData.dataList[c].dataList[0].flavour.contentType;
-      // var contentType = aDropData.flavour.contentType;
+      var contentType = aDropData.dataList[c].dataList[0].flavour.contentType;
       switch (contentType) {
         case "flock/richtreeitem":
         case "moz/rdfitem":
+        case "text/x-moz-url":
           var uri = aDropData.dataList[c].dataList[0].data;
-          // var uri = aDropData.data;
-          // alert("got uri of " + uri + "\n");
-          cp_controller.add_to_manifest(uri);
+          cp_controller.add_url_to_manifest(uri);
           break;
         case "application/x-moz-file":
           var file = Components.classes["@mozilla.org/file/local;1"]
             .createInstance(Components.interfaces.nsILocalFile);
             file.initWithPath( aDropData.dataList[c].dataList[0].data.path );
             cp_controller.receive_file(file);
-          break;
-        case "text/x-moz-url":
-          var url = aDropData.dataList[c].dataList[0].data;
-          cp_controller.add_to_manifest(url);
-
           break;
         default:
           alert('add handler for: ' + contentType);

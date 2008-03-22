@@ -9,116 +9,123 @@
   <script type="application/x-javascript" src="chrome://global/content/nsTransferable.js"/> 
   <script type="application/x-javascript" src="chrome://contentpackmaker/content/dnd.js"/>
   <script type="application/x-javascript" src="chrome://contentpackmaker/content/main.js"/>
+  <script type="application/x-javascript" src="chrome://contentpackmaker/content/serialize.js"/>
+  <script type="application/x-javascript" src="chrome://contentpackmaker/content/utils.js"/>
+  <script type="application/x-javascript" src="chrome://contentpackmaker/content/files.js"/>
   
-  <vbox align="stretch" pack="stretch" style="overflow: auto; font-size: 90%;">
+  <toolbox style="background-color: orange !important;">
+    <menubar id="contentpackmaker-menubar">
+      <menu id="file-menu" label="File">
+        <menupopup id="file-popup">
+          <menuitem label="New" oncommand="cp_controller.clear_manifest();"/>
+          <menuitem label="Open Project..." oncommand="cp_controller.load_project();" />
+          <menuitem label="Save Project..." oncommand="cp_controller.save_project();" />
+          <menuitem label="Export Extension..." oncommand="cp_controller.write_pack();"/>
+          <menuseparator/>
+          <menuitem label="Exit" oncommand="window.close();"/>
+        </menupopup>
+      </menu>
+      <menu id="about-menu" label="About">
+        <menupopup id="about-popup">
+          <menuitem label="About ContentPackMaker..."/>
+        </menupopup>
+      </menu>
+    </menubar>
+  </toolbox>
+  <hbox flex="1" pack="stretch" align="stretch">
+    <vbox align="stretch" pack="stretch" style="overflow: auto;" flex="1">
     
-    <vbox style="padding: 10px;" align="center">
-      <description style="font-size: 200%; ">WELCOME TO CONTENTPACK MAKER! </description>
-      <description style="font-size: 200%; ">Simply collect the content you want, and follow the instructions below.</description>
-    </vbox>
-    <spacer flex="1"/>
-    <vbox id="cp_main_dnd_target" flex="1" pack="center" style="min-height: 100px; border: 4px dotted yellow; margin: 10px; background-color: #996666;" align="center" 
-     ondraggesture="nsDragAndDrop.startDrag(event, cp_dnd);" 
-     ondragover="nsDragAndDrop.dragOver(event, cp_dnd);"      
-     ondragdrop="nsDragAndDrop.drop(event, cp_dnd);">
-      <description style="font-size: 200%; ">Drag and Drop stuff here</description>
-    </vbox>
-    <spacer flex="1"/>
-    <hbox flex="1" pack="start" align="start">
-      <spacer width="10"/>
-      <vbox style="padding: 10px; margin: 10px; border: 2px dashed green;">
-        <description style="font-size: 150%;">Pick Media Streamz</description>
-        
-        <vbox id="media-streamz"
-          style="padding: 10px; background-color: #888888;"
-                   datasources="rdf:flock-favorites"
-                   ref="urn:media:favorites"
-                   sortDirection="ascending"
-                   sortResource="http://home.netscape.com/NC-rdf#Name"
-                   ondraggesture="nsDragAndDrop.startDrag(event, cp_mediaDragObserver);">
-          <template>
-            <rule parent="hbox" />
-            <rule>
-              <conditions>
-                <content uri="?start" />
-                <member container="?start" child="?child" />
-              </conditions>
-              <bindings>
-                <binding subject="?child"
-                         predicate="http://flock.com/rdf#favicon"
-                         object="?favicon" />
-                <binding subject="?child"
-                         predicate="http://home.netscape.com/NC-rdf#Name"
-                         object="?name" />
-              </bindings>
-              <action>
-                <hbox uri="?child" flex="1" style="margin: 4px;">
-                    <image class="itemIcon" 
-                           src="?favicon" />
-                    <label class="itemLabel"
-                           crop="end" 
-                           flex="1"
-                           value="?name" />
-                </hbox>
-              </action>
-            </rule>
-          </template>
+      <vbox style="padding: 10px;" align="center">
+        <description style="font-size: 200%; ">FLOCK- CONTENT PACK MAKER</description>
+      </vbox>
+      <hbox flex="1" pack="start" align="start">
+        <vbox flex="1" style="color: #666666; padding: 20px; font-size: 120%;">
+            <description multiline="true">This tool allows you to quickly and easily build extensions (or "affinity content bundles") for the flock browser. These extensions contain a collection of bookmarks, media streams, rss feeds, and a theme.</description>
+            <description multiline="true">To get started, simply drag and drop the content onto the box below. Keep the following points in mind: You may want to open a second browser window, and drag content from there. This will ensure that any content that automatically LOADS when you click on it, won't load over top of this window.</description>
+            <description multiline="true">In order to include bookmarks that target the user's bookmark toolbar, you'll need to drag YOUR bookmark toolbar into the box. Make sure it contains only the bookmarks that you want to add in this content pack.</description>
+            <description multiline="true">Finally, you'll need to run the "build.sh" command that is created within your target directory. (When we switch to FF3, this tool will do that, too).</description>
+            
+        </vbox>
+        <vbox flex="1">
+          <vbox>
+            <description>Extension DESCRIPTION</description>
+            <spacer flex="1"/>
+            <textbox multiline="true" rows="8" cols="40" timeout="300" id="exten_description"/>
+          </vbox>
+          <hbox>
+            <description>The FIRSTRUN URL</description>
+            <spacer flex="1"/>
+            <textbox type="timed" size="40" timeout="300" oncommand="cp_controller.set_pack_property(this.id, this.value)" id="firstrunurl"/>
+          </hbox>
+          <hbox>
+            <description>The UPGRADE URL</description>
+            <spacer flex="1"/>
+            <textbox type="timed" size="40" timeout="300" oncommand="cp_controller.set_pack_property(this.id, this.value)" id="upgradeurl"/>
+          </hbox>
+          <hbox>
+            <description>The HOMEPAGE URL</description>
+            <spacer flex="1"/>
+            <textbox type="timed" size="40" timeout="300" oncommand="cp_controller.set_pack_property(this.id, this.value)" id="homepageurl"/>
+          </hbox>
+          <hbox>
+            <description>Set the toolbar state</description>
+            <button oncommand="cp_controller.set_toolbarsets(); alert('Okay!');" label="Get toolbars"/>
+          </hbox>  
+          <textbox disabled="true" id="maintoolbarset"/>
+          <textbox disabled="true" id="personaltoolbarset"/>
+        </vbox>
+      </hbox>
+      <spacer flex="1"/>  <!-- JMC TODO AUTHOR NAME AT SOME POINT -->
+      <spacer height="20"/>
+      <vbox>
+        <description style="font-size: 200%; ">Drag and Drop stuff here</description>
+        <vbox style="min-height: 100px; min-width: 300px; border: 2px dotted red; margin: 20px; padding: 10px;" 
+         ondraggesture="nsDragAndDrop.startDrag(event, cp_dnd);" 
+         ondragover="nsDragAndDrop.dragOver(event, cp_dnd);"      
+         ondragdrop="nsDragAndDrop.drop(event, cp_dnd);"
+         onkeypress="if (event.which == 8) cp_controller.remove_from_manifest();">
+            <listbox id="cp_manifest"/>
+            
         </vbox>
       </vbox>
-      <spacer width="20"/>
-      <vbox flex="1">
-        <hbox>
-          <description>Where to save the content pack</description>
-          <spacer flex="1"/>
-          <textbox disabled="true" enabled="false" id="cp_base_path"/>
-          <spacer width="10"/>
-          <button label="pick location" oncommand="cp_controller.show_directory_picker();" id="cp_save_location"/>
-        </hbox>
-        <hbox>
-          <description>The Name of the Pack</description>
-          <spacer flex="1"/>
-          <textbox type="timed" timeout="300" oncommand="cp_controller.set_pack_name(this.value);" id="cp_name"/>
-        </hbox>
-        <hbox>
-          <description>Extension DESCRIPTION</description>
-          <spacer flex="1"/>
-          <textbox type="timed" timeout="300" oncommand="cp_controller.exten_description = this.value;" id="cp_description"/>
-        </hbox>
-        <hbox>
-          <description>The FIRSTRUN URL</description>
-          <spacer flex="1"/>
-          <textbox type="timed" timeout="300" oncommand="cp_controller.firstrunurl = this.value;" id="cp_firstrun"/>
-        </hbox>
-        <hbox>
-          <description>The UPGRADE URL</description>
-          <spacer flex="1"/>
-          <textbox type="timed" timeout="300" oncommand="cp_controller.upgradeurl = this.value;" id="cp_upgrade"/>
-        </hbox>
-        <hbox>
-          <description>The HOMEPAGE URL</description>
-          <spacer flex="1"/>
-          <textbox type="timed" timeout="300" oncommand="cp_controller.homepageurl = this.value;" id="cp_homepage"/>
-        </hbox>
+    </vbox>
+    <vbox style="padding: 10px; margin: 10px; border: 2px dashed green;">
+      <description style="font-size: 150%;">Pick Media Streamz</description>  
+      <vbox id="media-streamz" flex="1"
+        style="padding: 10px; background-color: #888888;"
+                 datasources="rdf:flock-favorites"
+                 ref="urn:media:favorites"
+                 sortDirection="ascending"
+                 sortResource="http://home.netscape.com/NC-rdf#Name"
+                 ondraggesture="nsDragAndDrop.startDrag(event, cp_mediaDragObserver);">
+        <template>
+          <rule parent="hbox" />
+          <rule>
+            <conditions>
+              <content uri="?start" />
+              <member container="?start" child="?child" />
+            </conditions>
+            <bindings>
+              <binding subject="?child"
+                       predicate="http://flock.com/rdf#favicon"
+                       object="?favicon" />
+              <binding subject="?child"
+                       predicate="http://home.netscape.com/NC-rdf#Name"
+                       object="?name" />
+            </bindings>
+            <action>
+              <hbox uri="?child" style="margin: 4px;">
+                  <image class="itemIcon" 
+                         src="?favicon" />
+                  <label class="itemLabel"
+                         crop="end" 
+                         flex="1"
+                         value="?name" />
+              </hbox>
+            </action>
+          </rule>
+        </template>
       </vbox>
-      <spacer flex="2"/>
-    </hbox>
-    <spacer flex="1"/>  <!-- JMC TODO AUTHOR NAME AT SOME POINT -->
-    <spacer height="20"/>
-    <hbox>
-
-      <vbox style="min-height: 100px; min-width: 300px; border: 2px dotted red; margin: 20px; padding: 10px;" 
-       ondraggesture="nsDragAndDrop.startDrag(event, cp_dnd);" 
-       ondragover="nsDragAndDrop.dragOver(event, cp_dnd);"      
-       ondragdrop="nsDragAndDrop.drop(event, cp_dnd);">
-          <description>Current Manifest</description>
-          <listbox id="cp_manifest"/>
-      </vbox>
-      <vbox>
-        <description>Actions</description>
-        <button label="Save Content Pack" oncommand="cp_controller.write_pack();"/>
-        <button label="Save Manifest File" oncommand="cp_controller.save_manifest_file();"/>
-        <button label="Reset Contents" oncommand="alert('implement me!');"/>
-      </vbox>
-    </hbox>
-  </vbox>
+    </vbox>
+  </hbox>
 </window>

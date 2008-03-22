@@ -59,9 +59,10 @@
 } 
 
 /* windows-specific tabs */
+/*
 #main-window[affinityskin] .tabbrowser-tabs {
   background-color: transparent !important;
-  background-image: none !important; 
+  background-image: none !important;
 }
 
 #main-window[affinityskin] .tabbrowser-tab {
@@ -71,8 +72,9 @@
 }
 
 #main-window[affinityskin] .tabbrowser-strip {
-  -moz-appearance: none; /* mac-specific */
+  -moz-appearance: none;
 }
+*/
 
 /* Flock-specific hacks */
 #main-window[affinityskin] #personal-bookmarks,
@@ -89,7 +91,7 @@
 }
 #main-window[affinityskin] #PersonalToolbar > toolbarbutton,
 #main-window[affinityskin] #PersonalToolbar > toolbaritem:not(#personal-bookmarks) {
- /* background-image: url("chrome://browser/skin/personal-toolbar-bg.png") !important; */
+  background-image: url("chrome://browser/skin/personal-toolbar-bg.png") !important;
   background-repeat: repeat-x !important;
   margin: 0px;
   padding-left: 1px !important;
@@ -97,19 +99,19 @@
 }
 
 #main-window[affinityskin] #PersonalToolbar > toolbarseparator {
- /*  background-image: url("chrome://myspacepack/skin/flockbar-separator.png") !important; */
+  background-image: url("chrome://browser/skin/flockbar-separator.png") !important;
   background-repeat: no-repeat !important;
   width: 5px !important;
   margin: 0px;
 }
 
 #main-window[affinityskin] #personal-bookmarks {
- /*  background-image: url("chrome://myspacepack/skin/sub-bar-end.png") !important; */
- background-image: none !important;
+ background-image: url("chrome://browser/skin/sub-bar-end.png") !important;
+ /* background-image: none !important; */
 }
 
 #main-window[affinityskin] #PersonalToolbar > #personal-bookmarks > stack {
-  /* background-image: url("chrome://myspacepack/skin/personal-bar-bg.png") !important; */
+  background-image: url("chrome://browser/skin/personal-bar-bg.png") !important;
   background-repeat: repeat-x !important;
 }
 
@@ -117,13 +119,10 @@
 /* status bar */
 statusbar[affinityskin] {
   -moz-appearance: none;
-
   border-bottom: 0 !important;
-
-  background-repeat: no-repeat;
+  background-repeat: repeat-x;
   background-position: top left;
   background-color: transparent;
-  
   background-image: url("chrome://%EXTENNAME%/skin/stbar-default.jpg");
 }
 
@@ -142,9 +141,4 @@ statusbar[affinityskin] {
 #main-window[_affinityskin-dark-style*="toolbox"] #navigator-toolbox toolbarbutton,
 #main-window[_affinityskin-dark-style*="status"] > statusbar {
   color: white !important;
-}
-
-
-#headerSection.headerArea {
-  background-image: url("chrome://%EXTENNAME%/skin/myworld-header.jpg");
 }

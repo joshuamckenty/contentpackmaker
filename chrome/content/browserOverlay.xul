@@ -8,5 +8,5 @@
       accesskey="P"
       oncommand="openUILinkIn('chrome://contentpackmaker/content/contentpackmaker.xul', 'tab');" />
   </menupopup>
-
+	<statusbar id="status-bar" affinityskin="true"></statusbar> 
 </overlay>

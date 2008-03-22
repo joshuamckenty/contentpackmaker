@@ -3,3 +3,5 @@ overlay chrome://browser/content/browser.xul chrome://%EXTENNAME%/content/affini
 content  %EXTENNAME%    jar:chrome/%EXTENNAME%.jar!/content/
 skin     %EXTENNAME%    class/1.0	jar:chrome/%EXTENNAME%.jar!/skin/
 locale   %EXTENNAME%   en-US       jar:chrome/%EXTENNAME%.jar!/locale/en-US/
+
+override chrome://flock/skin/start/start.css chrome://%EXTENNAME%/skin/myworldOverlay.css

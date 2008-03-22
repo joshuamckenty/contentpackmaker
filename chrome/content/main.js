@@ -1,277 +1,244 @@
 // LICENSE BLOCK TODO
 
 
-const CC = Components.classes;
-const CI = Components.interfaces;
 
-
-/* from nspr's prio.h */
-const PR_RDONLY      = 0x01;
-const PR_WRONLY      = 0x02;
-const PR_RDWR        = 0x04;
-const PR_CREATE_FILE = 0x08;
-const PR_APPEND      = 0x10;
-const PR_TRUNCATE    = 0x20;
-const PR_SYNC        = 0x40;
-const PR_EXCL        = 0x80;
-
-var ios = CC["@mozilla.org/network/io-service;1"]
-    .getService(CI.nsIIOService);
-
-var cp_prefs = Components.classes['@mozilla.org/preferences-service;1']
-                         .getService(Components.interfaces.nsIPrefService)
-                         .getBranch('extensions.contentpackmaker.');
-
-function $(x) { return document.getElementById(x); }
 
 // JMC TODO:
 /*
-
-Support for default toolbar sets
-Support for preferences settings as well (extended set)
-Extended CSS hacking? Perhaps w/ firebug integration
-Multi-file DND
+Support for web clipboard contents
 Support for more DND flavours (URL, FF3 data types, etc).
-
 */
-
-var imageRules = {
- "stbar-default.jpg"  : {
-   chrome: "",
-   apply: function (win, aPath) {
-     var statusbars = win.document.getElementsByTagName("statusbar"); 
-     for (var i = 0; i < statusbars.length; i++) { 
-         statusbars[i].setAttribute("style", "background-image: url(file://" + aPath + ");");
-         statusbars[i].setAttribute("affinityskin", "true");
-     }
-   }
- },
- "tbox-default.jpg"  : {
-    chrome: "",
-    apply: function (win, aPath) {
-      var mainwin = win.document.getElementById('main-window');
-      mainwin.setAttribute("style", "background-image: url(file://" + aPath + ");"); 
-      mainwin.setAttribute("affinityskin", "true");
-    }
-  },
-  "mecardUpperBackground.png"  : {
-    chrome: "chrome://flock/skin/people/mecardUpperBackground.png",
-    apply: function (win, aPath) {
-       /*
-       var sidebar = win.document.getElementById("sidebar").contentDocument;
-       dump("JMC: Think I got sidebar, it's " + sidebar.documentElement + "\n");
-       if (sidebar.documentElement.id == "peopleSidebar") {
-         var peopleTabs = sidebar.getElementById("peopleServiceTabs");
-         var peoplePanel = sidebar.getAnonymousElementByAttribute(peopleTabs, "anonid", "mecard-info-panel"); 
-              peoplePanel.setAttribute("style", "background-image: url(file://" + aPath + ");");
-          // }
-       }
-       */
-    }
-  },
-  "main-nav-bg.png"  : {
-     chrome: "chrome://flock/skin/start/main-nav-bg.png",
-     apply: function (win, aPath) {
-       // 
-     }
-   },
-   "myworld-header-color.png" : {
-      chrome: "chrome://flock/skin/start/myworld-header-color.png",
-      apply: function(win, aPath) { 
-      } 
-   }
-}
 
 
 
 var cp_controller = {
-  manifest: [],
+  manifests: {},
   fileList: [],
+  
+  exten_description: null,
+  firstrunurl: null,
+  upgradeurl: null,
+  homepageurl: null,
+  location: null,
+  packProps: ["exten_description", "firstrunurl", 
+              "upgradeurl", "homepageurl", 
+              "cp_name", "location", 
+              "maintoolbarset", "personaltoolbarset"],
+  
+  get cp_name() { return this._cp_name; },
+  set cp_name(val) { this._cp_name = val.replace(" ", "-").toLowerCase(); },
+  
   init: function() {
     dump("JMC: Init'ing cp_controller\n");
     cp_controller.faves_coop = CC["@flock.com/singleton;1"]
                         .getService(CI.flockISingleton)
                         .getSingleton("chrome://flock/content/common/load-faves-coop.js")
                         .wrappedJSObject;
-  
-    if (cp_prefs.getPrefType("defaultlocation")) {
-      cp_controller.set_base_dir(cp_prefs.getCharPref("defaultlocation")); 
+    cp_controller.clear_manifest();
+    for (var i=0; i < cp_controller.packProps.length; i++) {
+      var prop = cp_controller.packProps[i];
+      try {
+        if (cp_prefs.getPrefType(prop) == cp_prefs.PREF_STRING) {
+          cp_controller.set_pack_property(prop, cp_prefs.getCharPref(prop)); 
+        } 
+      } catch (ex) { }
     }
-    if (cp_prefs.getPrefType("defaultpackname")) {
-      cp_controller.set_pack_name(cp_prefs.getCharPref("defaultpackname"));
-    }
-    
   },
   
-  show_directory_picker: function() {
-    while ($('cp_manifest').firstChild) {
-      $('cp_manifest').removeChild($('cp_manifest').lastChild);
-     }
+  set_pack_property: function(aPropName, aPropValue) {
+    this[aPropName] = aPropValue;
+    if ($(aPropName)) $(aPropName).value = aPropValue;
+    cp_prefs.setCharPref(aPropName, aPropValue);
+  },
+  
+  _select_extension_directory: function() {
      var fp = CC["@mozilla.org/filepicker;1"].createInstance(CI.nsIFilePicker);
-     fp.init(window, "Where to save your contentpack", CI.nsIFilePicker.modeGetFolder);
+     fp.init(window, "Where to save your contentpack", CI.nsIFilePicker.modeSave);
      var rv = fp.show();
      if (rv == CI.nsIFilePicker.returnOK || rv == CI.nsIFilePicker.returnReplace) {
-       var file = fp.file;
-       var path = fp.file.path;
-       this.set_base_dir(path);
-       var manifestFile = cp_getFileFromURL(path + "/manifest.js");
-       if (manifestFile.exists()) {
-         this.load_manifest_file(manifestFile.path); 
-       }
-       
-       // JMC - Off by one on the directory, here
+       this.set_pack_property("location", fp.file.parent.path);
+       this.set_pack_property("cp_name", fp.file.leafName);
+       return true;
      }
-  },
-  set_pack_name: function(aName) {
-    cp_controller.cp_name = aName.replace(" ", "-").toLowerCase();
-    cp_prefs.setCharPref("defaultpackname", cp_controller.cp_name);
-    $('cp_name').value = cp_controller.cp_name;
-  },
-  
-  set_base_dir: function(aPath) {
-    this.cp_path = aPath;
-    $('cp_base_path').setAttribute("value", aPath);
-    cp_prefs.setCharPref("defaultlocation", this.cp_path);
+     return false;
   },
   
   write_pack: function() {
-    var params = [
+    if (!cp_controller._select_extension_directory()) return;
+    cp_controller.set_pack_property("exten_description", $("exten_description").value);
+    var regexpparams = [
      {find: /\%EXTENID\%/g, subst: this.cp_name + "@contentpack.flock"}, 
      {find: /\%EXTENNAME\%/g, subst: this.cp_name},
      {find: /\%UPGRADEURL\%/g, subst: this.upgradeurl},
      {find: /\%FIRSTRUNURL\%/g, subst: this.firstrunurl},
      {find: /\%HOMEPAGEURL\%/g, subst: this.homepageurl},
-     {find: /\%DESCRIPTION\%/g, subst: this.exten_description}
+     {find: /\%DESCRIPTION\%/g, subst: this.exten_description},
+     {find: /\%MAINTOOLBAR\%/g, subst: this.maintoolbarset},
+     {find: /\%PTOOLBAR\%/g, subst: this.personaltoolbarset}
      ];
     var templatePath = "chrome://contentpackmaker/content/template";
-    var basePath = this.cp_path + "/" + this.cp_name;
-    this.make_dir(basePath);
-    this.copy_file(templatePath + "/install.rdf.template", basePath + "/install.rdf", params);
-    this.copy_file(templatePath + "/chrome.manifest.template", basePath + "/chrome.manifest", params);
-    this.copy_file(templatePath + "/build.sh.template", basePath + "/build.sh", params, 0700);
+    var basePath = this.location + "/" + this.cp_name;
     
+    make_dir(basePath + "/chrome/content");
+    make_dir(basePath + "/chrome/locale/en-US/profile");
+    make_dir(basePath + "/defaults/preferences");
+    var skinDir = make_dir(basePath + "/chrome/skin");
     
-    // JMC - TODO - directory traversal of chrome - possible?
-    this.make_dir(basePath + "/chrome");
-    this.make_dir(basePath + "/chrome/content");
-    this.copy_file(templatePath + "/contentpack.js.template", basePath + "/chrome/content/contentpack.js", params);
-    this.copy_file(templatePath + "/contentpack-coop.js.template", basePath + "/chrome/content/contentpack-coop.js", params);
-    this.copy_file(templatePath + "/affinityskin.xul.template", basePath + "/chrome/content/affinityskin.xul", params);
-    // this.copy_file(templatePath + "/myworldOverlay.xul.template", basePath + "/chrome/content/myworldOverlay.xul", params);
-    this.copy_file(templatePath + "/affinityskin.css.template", basePath + "/chrome/content/affinityskin.css", params);
-    
-    this.make_dir(basePath + "/chrome/locale");
-    this.make_dir(basePath + "/chrome/locale/en-US");
-    this.make_dir(basePath + "/chrome/locale/en-US/profile");
-    
-    var defaultFavesFile = basePath + "/chrome/locale/en-US/profile/defaultBookmarks.js";
-    this.write_file(defaultFavesFile, this.serialize_manifest("Favorite"));
-    var defaultFeedsFile = basePath + "/chrome/locale/en-US/profile/defaultFeeds.opml";
-    this.write_file(defaultFeedsFile, this.serialize_opml());
-    this.write_file(basePath + "/chrome/locale/en-US/profile/defaultMedia.js",  this.serialize_manifest("MediaQuery"));
+    for (var j=0; j < gFilePaths.length; j++) {
+      var fpObj = gFilePaths[j];
+      var fileList = fpObj.files;
+      for (var i=0; i < fileList.length; i++) {
+       copy_file(templatePath + "/" + fileList[i] + ".template", basePath + fpObj.path + fileList[i], regexpparams);
+      }
+    }
+    copy_file(templatePath + "/prefs.js.template", basePath + "/defaults/preferences/" + this.cp_name + "-prefs.js", regexpparams);
     
     // Create Skin
-    var skinDir = this.make_dir(basePath + "/chrome/skin");
     for(var i=0; i < this.fileList.length; i++) {
       var fileObj = this.fileList[i];
-      var existingImage = cp_getFileFromURL(basePath + "/chrome/skin/" + fileObj.filename);
+      var existingImage = getFileFromPath(basePath + "/chrome/skin/" + fileObj.filename);
       if (existingImage.exists()) {
        existingImage.remove(false); 
       }
       fileObj.file.copyTo(skinDir, fileObj.filename);
       if (imageRules[fileObj.filename].chrome != "") {
-        this.append_to( basePath + "/chrome.manifest", this.make_chrome_override(fileObj.filename));
+        append_to( basePath + "/chrome.manifest", this.make_chrome_override(fileObj.filename));
       }
     }
-
-    // Create Defaults
     
-    this.make_dir(basePath + "/defaults");
-    this.make_dir(basePath + "/defaults/preferences");
-    this.copy_file(templatePath + "/prefs.js.template", basePath + "/defaults/preferences/" + this.cp_name + "-prefs.js", params);
-    
+    var serializer = new cp_serializer(this.manifests["Favorite"], this.faves_coop);
+    write_file(basePath + "/chrome/locale/en-US/profile/defaultBookmarks.js", serializer.serialize_manifest("Favorite"));
+    serializer = new cp_serializer(this.manifests["Feed"], this.faves_coop);
+    write_file(basePath + "/chrome/locale/en-US/profile/defaultFeeds.opml", serializer.serialize_opml());
+    serializer = new cp_serializer(this.manifests["MediaQuery"], this.faves_coop);
+    write_file(basePath + "/chrome/locale/en-US/profile/defaultMedia.js",  serializer.serialize_manifest("MediaQuery"));
     alert("Now don't forget to run build.sh in the target directory!");
   },
   
-  
-  copy_file: function flock_copyFileTo(aFilePath, aTargetPath, aSubst, aFileMode) {
-    var contents = getContents(aFilePath);
-    if (aSubst) {
-      for (x in aSubst) {
-       contents = contents.replace( aSubst[x].find, aSubst[x].subst); 
-      }
-    }
-    this.write_file(aTargetPath, contents, aFileMode);
-  },
-  
-  // Write to the file system
-  write_file: function(aFilePath, aContents, aFileMode) {
-    var mode = PR_TRUNCATE;
-    if (!aFileMode) aFileMode = 0600;
-    var outfile = cp_getFileFromURL(aFilePath);
-    if (!outfile.exists()) {
-      outfile.create(CI.nsIFile.NORMAL_FILE_TYPE, aFileMode);
-    }
-    var outStream = CC["@mozilla.org/network/file-output-stream;1"]
-                    .createInstance(CI.nsIFileOutputStream);
-    // 0600 == -rw------- file permissions
-    outStream.init(outfile, PR_WRONLY | PR_CREATE_FILE | mode, 0600, 0);
-    outStream.write(aContents, aContents.length);
-    outStream.close();
-  },
-  // JMC TODO - Refactor this into the above
-  append_to: function (aFilePath, aContents) {
-    var outfile = cp_getFileFromURL(aFilePath);
-    var outStream = CC["@mozilla.org/network/file-output-stream;1"]
-                    .createInstance(CI.nsIFileOutputStream);
-    outStream.init(outfile, PR_WRONLY | PR_CREATE_FILE | PR_APPEND, 0600, 0);
-    outStream.write(aContents, aContents.length);
-    outStream.close();
-  },
-  
-  make_dir: function(aPath) {
-    var outfile = cp_getFileFromURL(aPath);
-    if (!outfile.exists()) {
-      outfile.create(CI.nsIFile.DIRECTORY_TYPE, 0600);
-    }
-    return outfile;
+  set_toolbarsets: function () {
+    var win = getTopBrowserWindow();
+    cp_controller.set_pack_property("maintoolbarset", 
+      win.document.getElementById("nav-bar").getAttribute("currentset"));
+    cp_controller.set_pack_property("personaltoolbarset", 
+      win.document.getElementById("PersonalToolbar").getAttribute("currentset"));
   },
   
   make_chrome_override: function(aFileName) {
     var aImageObj = imageRules[aFileName];
-    return "override " + aImageObj.chrome  + " chrome://" + this.cp_name + "/skin/" + aFileName + "\n";
+    return "override " + aImageObj.chrome  
+        + " chrome://" + this.cp_name 
+        + "/skin/" + aFileName + "\n";
   },
   
-  add_manifest_url: function (aUrl, aParent) {
+  add_to_manifest_display: function (aLabel, aObj) {
     var line = document.createElement("listitem");
-    line.setAttribute("label", aUrl);
+    line.setAttribute("label", aLabel);
+    if (aObj.path) {
+      line.setAttribute("path", aObj.path);
+    } else {
+      line.setAttribute("coopid", aObj.id());
+    }
     $('cp_manifest').appendChild(line);
   },
   
-  add_to_manifest: function(aObj) {
-    var lines = aObj.split("\n");
+  add_url_to_manifest: function(aString) {
+    dump("JMC: Adding URL " + aString + "\n");
+    var lines = aString.split("\n");
     var coopObj = this.faves_coop.get(lines[0]);
     if (coopObj) {
-      this.manifest.push(coopObj);
-      this.add_manifest_url(coopObj.name, null);
-      if ((coopObj.isA(cp_controller.faves_coop.Folder) || coopObj.isA(cp_controller.faves_coop.FeedFolder)) && coopObj.children) {
-        var childEnum = coopObj.children.enumerate();
-        while (childEnum.hasMoreElements()) {
-          var child = childEnum.getNext();
-         // this.manifest.push(coopObj);
-          this.add_manifest_url("-- " + child.name, coopObj);
-        }
+      this.add_obj_to_manifest(coopObj);
+    }
+  },
+  
+  add_obj_to_manifest: function(aObj, aPrefix) {
+    if (!aPrefix) aPrefix = "";
+    var type = this.get_type(aObj);
+    var label = "[" + type + "] " + aObj.name;
+    this.add_to_manifest_display(aPrefix + label, aObj);
+    if (aPrefix == "") {
+      var manifestType = type;
+      if (type == "Folder" || type == "FeedFolder") {
+        if (!aObj.children) return;
+        var manifestType = this.type_of_children(aObj);
+      }
+      this.manifests[manifestType].push(aObj);
+    }
+    if (((type == "Folder") || (type == "FeedFolder")) && aObj.children) {
+      var childEnum = aObj.children.enumerate();
+      while (childEnum.hasMoreElements()) {
+        var child = childEnum.getNext();
+        this.add_obj_to_manifest(child, aPrefix + "--");
       }
     }
   },
   
+  type_of_children: function(aCoopObj) {
+    var childEnum = aCoopObj.children.enumerate();
+    while (childEnum.hasMoreElements()) {
+      var child = childEnum.getNext();
+      var type = this.get_type(child);
+      if (type != "Folder" && type != "FeedFolder") {
+        return type;  
+      } 
+    }
+  },
+  
+  _make_manifest_obj_string: function (aCoopObj) {
+    var type = this.get_type(aCoopObj);
+    var id = aCoopObj.id();
+    if (id == this.faves_coop.toolbar.folder.id()) id = "urn:flock:toolbar";
+    var maniObj = "{ \
+      id: function() { return \"" + id + "\" }, \n\
+      name: \"" + aCoopObj.name + "\" , \n\
+      type: \"" + type + "\" , \n\
+      query: \"" + aCoopObj.query + "\" , \n\
+      URL: \"" + aCoopObj.URL + "\" , \n\
+      service: \"" + ((typeof aCoopObj.service == 'string') ? aCoopObj.service : "null") + "\" , \n\
+      favicon: \"" + ((aCoopObj.favicon) ? aCoopObj.favicon : "null") + "\" , \n\
+      description: \"" + aCoopObj.description + "\" , \n";
+    if ((type == "Folder" || type == "FeedFolder") && aCoopObj.children) {
+      maniObj += "\
+      children: { enumerate: function() {\n return { \n\
+          getNext: function() { return this.results.shift() }, \n\
+          hasMoreElements: function() { return this.results.length > 0; }, \n\
+          results: [\n";
+      var childEnum = aCoopObj.children.enumerate();
+      while (childEnum.hasMoreElements()) {
+        var child = childEnum.getNext();
+        maniObj += this._make_manifest_obj_string(child) + ",\n";
+      }    
+      maniObj += "]\n }\n }\n }\n";
+    } else {
+      maniObj += "children: false\n";
+    }
+    maniObj += "}";
+    return maniObj;
+  },
+  
+  remove_from_manifest: function(item) {
+    if (!item) item = $('cp_manifest').selectedItem;
+    item.parentNode.removeChild(item);
+    if (item.hasAttribute("coopid")) {
+      var targetId = item.getAttribute("coopid");
+      for (x in this.manifests) {
+       var manifest = this.manifests[x];
+       for (var i =0; i < manifest.length; i++) {
+         var item = manifest[i];
+         if (item.id() == targetId) {
+           manifest.splice(i,1); 
+         }
+       }
+      }
+    } else {
+      // JMC TODO - Find and remove from fileList
+    }
+  },
+  
   receive_file: function(aFile) {
-    dump("JMC: Got drop of file with path " + aFile.path + "\n");
     var fileBits = aFile.path.split("/");
     var fileName = fileBits.pop();
-    dump("JMC: Think filename is " + fileName + "\n");
     if (imageRules[fileName]) {
-      this.add_manifest_url("* - " + aFile.path);
+      this.add_to_manifest_display("[Image] " + fileName, aFile, null);
       var win = getTopBrowserWindow();
       if (win) {
         imageRules[fileName].apply(win, aFile.path); 
@@ -280,157 +247,102 @@ var cp_controller = {
     }
   },
   
-  serialize_single_child: {
-    "Favorite": function(aObj, aParent) {
-      return "\naddBookmarkTo(\"" +  aObj.name.replace("&", "&amp;") + "\", \
-         \"" + aObj.URL.replace("&", "&amp;") + "\", null, " + aParent + "); \n";
-    },
-    "MediaQuery": function(aObj, aParent) {
-      return "\addMediaQueryTo(\"" +  aObj.name.replace("&", "&amp;") + "\", \
-         \"" + decodeURIComponent(aObj.query) + "\", '" + aObj.service + "'); \n";
+  save_project: function () {
+    cp_controller.set_pack_property("exten_description", $("exten_description").value);
+    var fp = CC["@mozilla.org/filepicker;1"].createInstance(CI.nsIFilePicker);
+    fp.defaultString = "manifest.js";
+    if (cp_prefs.getPrefType("location")) {
+      fp.displayDirectory = getFileFromPath(cp_prefs.getCharPref("location"));
+    }
+    fp.init(window, "Where to save your manifest", CI.nsIFilePicker.modeSave);
+    fp.appendFilter("ContentPack Manifests", "*.js");
+    var rv = fp.show();
+    if (rv == CI.nsIFilePicker.returnOK || rv == CI.nsIFilePicker.returnReplace) {
+      this.save_manifest_file(fp.file.path);
     }
   },
   
-  serialize_single_feed: function(aObj) {
-    return "<outline type=\"rss\" text=\"" + aObj.name +"\" title=\"" + aObj.name + "\" xmlUrl=\"" + aObj.URL.replace("&", "&amp;")  + "\"/>\n";
+  load_project: function () {
+    var fp = CC["@mozilla.org/filepicker;1"].createInstance(CI.nsIFilePicker);
+    if (cp_prefs.getPrefType("location")) {
+      fp.displayDirectory = getFileFromPath(cp_prefs.getCharPref("location"));
+    }
+    fp.appendFilter("ContentPack Manifests", "*.js");
+    fp.init(window, "Load your Project...", CI.nsIFilePicker.modeOpen);
+    var rv = fp.show();
+    if (rv == CI.nsIFilePicker.returnOK) {
+      this.load_manifest_file(fp.file.path);
+    }
   },
   
-  save_manifest_file: function() {
-    // this.manifest
-    
-    var interestingProps = ["name", "URL", "query", "service"];
-    var outputString = "";
-    outputString += "cp_controller.manifest = [];\n";
-    for (var i =0; i <this.manifest.length; i++) {
-      var item = this.manifest[i];
-      outputString += "cp_controller.add_to_manifest(\"" + item.id() + "\\nsecondline\");\n";
-    }
-    dump("JMC: serialized manifest looks like: \n" + outputString + "\n");
-    
-    
-    // this.fileList
-    outputString += "cp_controller.fileList = [];\n";
-    for (var i =0; i <this.fileList.length; i++) {
-      var item = this.fileList[i];
-      outputString += "cp_controller.receive_file(cp_getFileFromURL(\"" + this.fileList[i].file.path + "\"));\n";
-    }
-    dump("JMC: serialized manifest looks like: \n" + outputString + "\n");
-    var basePath = this.cp_path + "/" + this.cp_name;
-    this.make_dir(basePath);
-    this.write_file(basePath + "/manifest.js", outputString);
-    // URLS and description bits
-    
-  },
+  save_manifest_file: function(aFilePath) {
+   var outputString = "";
+   outputString += "cp_controller.clear_manifest();\n";
+   for (x in this.manifests) {
+     var manifest = this.manifests[x];
+     for (var i =0; i < manifest.length; i++) {
+       var item = manifest[i];
+       outputString += "cp_controller.add_obj_to_manifest(\n";
+       outputString += this._make_manifest_obj_string(item) + ");\n";
+     }
+   }
+   
+   outputString += "cp_controller.fileList = [];\n";
+   for (var i =0; i <this.fileList.length; i++) {
+     var item = this.fileList[i];
+     outputString += "cp_controller.receive_file(getFileFromPath(\"" 
+      + this.fileList[i].file.path + "\"));\n";
+   }
   
+   for (var i=0; i < this.packProps.length; i++) {
+     if (this[this.packProps[i]])
+      outputString += "cp_controller.set_pack_property(\"" 
+        + this.packProps[i]  + "\", \"" 
+        + this[this.packProps[i]].replace(/\n/g, "\\n") +"\");\n";
+   }
+   write_file(aFilePath, outputString);
+  },
+
   load_manifest_file: function(aFilePath) {
-      var loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
-                                .getService(Components.interfaces.mozIJSSubScriptLoader);
-      loader.loadSubScript("file://" + aFilePath, window);
+    cp_controller.clear_manifest();
+    var loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
+                  .getService(Components.interfaces.mozIJSSubScriptLoader);
+    loader.loadSubScript("file://" + aFilePath, window);
   },
-  
-  serialize_manifest: function(type) {
-    var outputString = "";
-    var looseChildren = "";
-    var faves_coop = this.faves_coop;
-    for (var i=0; i < this.manifest.length; i++) {
-      var coopObj = this.manifest[i];
-      if (coopObj.isInstanceOf(faves_coop.Folder)) {
-        if (coopObj.id() == faves_coop.toolbar.folder.id()) {
-          outputString += "\nvar contentpackfolder" + i + " = coop.toolbar.folder;\n\n"; 
-        } else {
-          outputString += "\nvar contentpackfolder" + i + 
-          " = new coop.Folder(); \
-          \ncontentpackfolder" + i + ".name = '" + coopObj.name   + "'; \
-          \ncoop.bookmarks_root.children.addOnce(contentpackfolder" + i + "); \n\n";
-        }
-        // \"" + coopObj.id()   + "\"
-        if (coopObj.children) {
-          var childEnum = coopObj.children.enumerate();
-          while (childEnum.hasMoreElements()) {
-            var child = childEnum.getNext();
-            if (child.isInstanceOf(faves_coop[type]))
-              outputString += this.serialize_single_child[type](child, "contentpackfolder" + i);
-          }
-        }
-        
-      } else {
-        if (coopObj.isInstanceOf(faves_coop[type]))
-         outputString += this.serialize_single_child[type](coopObj, "coop.bookmarks_root");
-      }
+
+  clear_manifest: function() {
+    while ($('cp_manifest').firstChild) {
+     $('cp_manifest').removeChild($('cp_manifest').lastChild);
+    } 
+    cp_controller.manifests = {};
+    cp_controller.manifests["Feed"] = [];
+    cp_controller.manifests["MediaQuery"] = [];
+    cp_controller.manifests["Favorite"] = [];
+    
+    cp_controller.fileList = [];
+    for (var i=0; i < cp_controller.packProps.length; i++) {
+      if ($(cp_controller.packProps[i])) $(cp_controller.packProps[i]).value = "";
     }
-    return outputString;
   },
   
-  serialize_opml: function() {
-    var faves_coop = cp_controller.faves_coop;
-    var outputString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<opml version=\"1.0\">\n \
-      <head>\n \
-        <title>Default Feeds</title>\n \
-      </head>\n \
-      <body>\n ";
-    for (var i=0; i < this.manifest.length; i++) {
-      var coopObj = this.manifest[i];
-      if (coopObj.isInstanceOf(faves_coop.FeedFolder)) {
-        outputString += "<outline text=\"" + coopObj.name   + "\">\n";
-        if (coopObj.children) {
-          var childEnum = coopObj.children.enumerate();
-          while (childEnum.hasMoreElements()) {
-            var child = childEnum.getNext();
-            if (child.isInstanceOf(faves_coop.Feed)) {
-              outputString += this.serialize_single_feed(child);
-            }
-          }
-        }
-        outputString += "</outline>\n";
-      } else if (coopObj.isInstanceOf(faves_coop.Feed)) {
-          outputString += this.serialize_single_feed(coopObj);
-      }
-    }
-    outputString += "</body>\n</opml>\n";
-    return outputString;
+  get_type: function(aObj) {
+    var type = "Folder";
+    if (this.compare_type(aObj, "MediaQuery")) type = "MediaQuery";
+    if (this.compare_type(aObj, "Favorite")) type = "Favorite";
+    if (this.compare_type(aObj, "Feed")) type = "Feed";
+    if (this.compare_type(aObj, "FeedFolder")) type = "FeedFolder";
+    return type;
   },
   
-  //TODO - Loading method
+  compare_type: function(aObj, aType) {
+    if (aObj.type) {
+      if (aObj.type == aType) return true;
+    } else {
+      if (aObj.isInstanceOf(this.faves_coop[aType])) return true;
+    }  
+    return false;
+  }
 }
 
-function getTopBrowserWindow() {
-  var wm = CC["@mozilla.org/appshell/window-mediator;1"]
-           .getService(CI.nsIWindowMediator);
-  var win = wm.getMostRecentWindow("navigator:browser");
-  return win;
-}
-
-function flock_getChromeFile(aChromeURL) {
-  return getFileInternal(aChromeURL);
-}
-
-function getContents(aURL){
-  var scriptableStream=Components
-    .classes["@mozilla.org/scriptableinputstream;1"]
-    .getService(Components.interfaces.nsIScriptableInputStream);
-
-  var channel=ios.newChannel(aURL,null,null);
-  var input=channel.open();
-  scriptableStream.init(input);
-  var str=scriptableStream.read(input.available());
-  scriptableStream.close();
-  input.close();
-  return str;
-}
-
-function cp_getFileFromURL(aURL) {
-    aURL = "file://" + aURL;
-    return getFileInternal(aURL);
-}
-
-function getFileInternal(aURL) {
-    var fileHandler = ios.getProtocolHandler("file")
-        .QueryInterface(Components.interfaces.nsIFileProtocolHandler);
-    var sourceSpec = fileHandler.getFileFromURLSpec(aURL);
-    var sourceFile = CC["@mozilla.org/file/local;1"]
-        .createInstance(CI.nsILocalFile);
-    sourceFile.initWithFile(sourceSpec);
-    return sourceFile;
-}
 
 window.addEventListener('load', cp_controller.init, true);

@@ -49,7 +49,7 @@ var %EXTENNAME%ContentPackController = {
       this.uninstallContent();
       pageURL = this._getPref(this.PREFBASE + "upgradeURL");
     }
-    if (pageURL) {
+    if (pageURL && pageURL != "null") {
       setTimeout(function(){window.openUILinkIn(pageURL, "tab")}, this.SHOW_DELAY);
     }
     
@@ -57,7 +57,7 @@ var %EXTENNAME%ContentPackController = {
     this.installContent();
 
     var homepage = this._getPref(this.PREFBASE + "flockHomepage");
-    if (!homepage) {
+    if (!homepage || homepage == "null") {
       try {
         this._prefSvc.clearUserPref("browser.startup.homepage");
       }
@@ -139,8 +139,12 @@ var %EXTENNAME%ContentPackController = {
     }
     
     //this._prefSvc.clearUserPref(this.PREFBASE + "lastInstallTime");
-    this._prefSvc.clearUserPref(this.PREFBASE + "lastversion");
-    this._prefSvc.clearUserPref("browser.startup.homepage");
+    try {
+      this._prefSvc.clearUserPref(this.PREFBASE + "lastversion");
+    } catch (ex) {}
+    try {
+      this._prefSvc.clearUserPref("browser.startup.homepage");
+    } catch (ex) {}
   },
 
   sendPing: function sendPing(pingArg) {
@@ -169,7 +173,7 @@ var %EXTENNAME%ContentPackController = {
     var inst = this;
     var photoAPI = Cc["@flock.com/photo-api-manager;1?"]
                   .getService(Ci.flockIPhotoAPIManager);
-    var addBookmarkTo = function addBMTo(aName, aURL, aDescription, aTarget) {
+    var addBookmarkTo = function addBMTo(aName, aURL, aDescription, aTarget, aOldID, aFavIcon) {
       if (!aTarget) {
         aTarget = inst._coop.favorites_root;
       }
@@ -181,11 +185,12 @@ var %EXTENNAME%ContentPackController = {
       if (!inst.wasUserDeleted(id)) {
         var values = {name: aName, URL: aURL, description: aDescription}; 
         var bookmark = new inst._coop.Bookmark(id, values);
+        if (aFavIcon) bookmark.favicon = aFavIcon;
         //bookmark.datevalue = inst.installTime;
         aTarget.children.addOnce(bookmark);
       }
     }
-    var addMediaQueryTo = function addMQTo(aName, aQuery, aService, aTarget) {
+    var addMediaQueryTo = function addMQTo(aName, aQuery, aService, aTarget, aOldID) {
       var query = new queryHelper(aQuery);
       var id = "urn:media:favorites:" + aService + ":" + query.stringVal;
       if (!inst.wasUserDeleted(id)) {

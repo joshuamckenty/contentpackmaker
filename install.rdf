@@ -4,7 +4,7 @@
   <Description about="urn:mozilla:install-manifest">
     <em:id>contentpackmaker@cognition.ca</em:id>
     <em:name>ContentPackMaker</em:name>
-    <em:version>0.1</em:version>
+    <em:version>0.2</em:version>
     <em:description>Handy tool for building contentpack extensions</em:description>
     <em:creator>Joshua McKenty</em:creator>
     <em:updateURL>https://www.cognition.ca/extensions/update.rdf</em:updateURL>    

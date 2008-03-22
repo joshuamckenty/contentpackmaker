@@ -64,9 +64,9 @@
 } 
 
 /* windows-specific tabs */
+/*
 #main-window[affinityskin] .tabbrowser-tabs {
   background-color: transparent !important;
-  /*background-image: none !important; */
 }
 
 #main-window[affinityskin] .tabbrowser-tab {
@@ -76,24 +76,26 @@
 }
 
 #main-window[affinityskin] .tabbrowser-strip {
-  -moz-appearance: none; /* mac-specific */
+  -moz-appearance: none; 
 }
+*/
 
 /* Flock-specific hacks */
 #main-window[affinityskin] #personal-bookmarks,
 #main-window[affinityskin] #bookmarks-stack
 {
   background-color: transparent !important;
-  background-image: none !important;
+  /* background-image: none !important; */
 }
 
 /* Personal Toolbar/Flockbar Styling */
 #main-window[affinityskin] #PersonalToolbar {
   padding-left: 0px !important;
 }
+
 #main-window[affinityskin] #PersonalToolbar > toolbarbutton,
 #main-window[affinityskin] #PersonalToolbar > toolbaritem:not(#personal-bookmarks) {
- /* background-image: url("chrome://browser/skin/personal-toolbar-bg.png") !important; */
+  background-image: url("chrome://browser/skin/personal-toolbar-bg.png") !important;
   background-repeat: repeat-x !important;
   margin: 0px;
   padding-left: 1px !important;
@@ -109,13 +111,13 @@
 
 #main-window[affinityskin] #personal-bookmarks {
  /*  background-image: url("chrome://myspacepack/skin/sub-bar-end.png") !important; */
- background-image: none !important;
+ /* background-image: none !important; */
 }
 
 #main-window[affinityskin] #PersonalToolbar > #personal-bookmarks > stack {
   /* background-image: url("chrome://myspacepack/skin/personal-bar-bg.png") !important; */
   background-repeat: repeat-x !important;
-  background-image: none !important;
+  /* background-image: none !important; /*
 }
 
 /* Myworld Styling */
@@ -135,7 +137,7 @@ statusbar[affinityskin] {
 
   border-bottom: 0 !important;
 
-  background-repeat: no-repeat;
+  background-repeat: repeat-x;
   background-position: top left;
   background-color: transparent;
   
