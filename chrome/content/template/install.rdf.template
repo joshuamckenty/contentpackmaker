@@ -4,6 +4,7 @@
   <Description about="urn:mozilla:install-manifest">
     <em:id>%EXTENID%</em:id>
     <em:name>%EXTENNAME%</em:name>
+    %EXTENHIDDEN%
     <em:version>0.1</em:version>
     <em:description>%DESCRIPTION%</em:description>
     <em:creator>Joshua McKenty</em:creator>

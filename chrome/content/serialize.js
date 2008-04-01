@@ -1,12 +1,31 @@
 
-function cp_serializer(aManifest, aFavesCoop) {
+function cp_serializer(aManifest, aFavesCoop, bPrettify) {
   this.manifest = aManifest;
   this.gIdx = 1;
   this.faves_coop = aFavesCoop;
   this.serialize_single_child.toolbarid = aFavesCoop.toolbar.folder.id();
+  this.prettify = bPrettify;
+  this.serialize_single_child.parentobj = this;
 }
 
 cp_serializer.prototype = { 
+  prettify_name: function (aString) {
+    dump ("JMC: unpretty string is " + aString + "\n");
+    if (!this.prettify) return aString;
+    var pattern = /Search results for: “([^”]*)”/g ;
+    var results = pattern.exec(aString);
+    if (results) {
+      return this.titlecase(results[1]);
+    } else {
+      return aString; 
+    }
+  },
+  titlecase: function(str) {
+        return str.toLowerCase().replace(/\b[a-z]/g, cnvrt);
+        function cnvrt() {
+            return arguments[0].toUpperCase();
+        }
+  },
   serialize_single_child: {
     "Favorite": function(aObj, aParent) {
       return "\naddBookmarkTo(\"" 
@@ -16,7 +35,7 @@ cp_serializer.prototype = {
          + aObj.id() + "\", \"" + aObj.favicon + "\"); \n";
     },
     "MediaQuery": function(aObj, aParent) {
-      return "\addMediaQueryTo(\"" +  aObj.name.replace(/&/g, "&amp;") + "\", \
+      return "\addMediaQueryTo(\"" +  this.parentobj.prettify_name(aObj.name.replace(/&/g, "&amp;")) + "\", \
          \"" + decodeURIComponent(aObj.query) + "\", '" + aObj.service + "', null, \"" + aObj.id() + "\"); \n";
     },
     "Folder": function(aObj, aParent, idx) {

@@ -107,6 +107,12 @@ var imageRules = {
         
       }
    },
+   "flockBarIcons.png" : {
+      chrome: "chrome://browser/skin/flockBarIcons.png",
+      apply: function(win, aPath) {
+        
+      }
+   }
 }
 
 function getMyWorldWin(win) {

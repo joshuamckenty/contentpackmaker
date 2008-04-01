@@ -23,7 +23,7 @@ var cp_controller = {
   packProps: ["exten_description", "firstrunurl", 
               "upgradeurl", "homepageurl", 
               "cp_name", "location", 
-              "maintoolbarset", "personaltoolbarset"],
+              "maintoolbarset", "personaltoolbarset", "myworldwidgets"],
   
   get cp_name() { return this._cp_name; },
   set cp_name(val) { this._cp_name = val.replace(" ", "-").toLowerCase(); },
@@ -66,6 +66,7 @@ var cp_controller = {
   write_pack: function() {
     if (!cp_controller._select_extension_directory()) return;
     cp_controller.set_pack_property("exten_description", $("exten_description").value);
+    var isEdition = ($('packtype').selectedItem.id == "radiobuild");
     var regexpparams = [
      {find: /\%EXTENID\%/g, subst: this.cp_name + "@contentpack.flock"}, 
      {find: /\%EXTENNAME\%/g, subst: this.cp_name},
@@ -74,7 +75,9 @@ var cp_controller = {
      {find: /\%HOMEPAGEURL\%/g, subst: this.homepageurl},
      {find: /\%DESCRIPTION\%/g, subst: this.exten_description},
      {find: /\%MAINTOOLBAR\%/g, subst: this.maintoolbarset},
-     {find: /\%PTOOLBAR\%/g, subst: this.personaltoolbarset}
+     {find: /\%PTOOLBAR\%/g, subst: this.personaltoolbarset},
+     {find: /\%MYWORLDWIDGETS\%/g, subst: this.myworldwidgets},
+     {find: /\%EXTENHIDDEN\%/g, subst: (isEdition) ? "<em:hidden>true</em:hidden>" : "" }
      ];
     var templatePath = "chrome://contentpackmaker/content/template";
     var basePath = this.location + "/" + this.cp_name;
@@ -93,6 +96,14 @@ var cp_controller = {
     }
     copy_file(templatePath + "/prefs.js.template", basePath + "/defaults/preferences/" + this.cp_name + "-prefs.js", regexpparams);
     
+    // Complex Value for MyWorld widget layout
+    if (this.myworldwidgets) {
+      copy_file(templatePath + "/affinity.properties.template", 
+        basePath + "/chrome/locale/en-US/affinity.properties", regexpparams); 
+      append_to(basePath + "/defaults/preferences/" + this.cp_name + "-prefs.js", 
+      "\npref(\"flock.myworld.widgets.layout\", \"chrome://" + this.cp_name + "/locale/affinity.properties\");\n");
+    }
+    
     // Create Skin
     for(var i=0; i < this.fileList.length; i++) {
       var fileObj = this.fileList[i];
@@ -106,11 +117,26 @@ var cp_controller = {
       }
     }
     
+    // If it's for a build, 
+    // Add the other chrome overrides
+    
+    if (isEdition) {
+      var extra_override = "\n\
+override chrome://flock/locale/photo/defaultMedia.js chrome://"+ this.cp_name +"/locale/profile/empty.js\n\
+override chrome://flock/locale/feeds/opml/default.opml chrome://"+ this.cp_name +"/locale/profile/empty.opml\n\
+override chrome://flock/locale/favorites/defaultFavorites.js chrome://"+ this.cp_name +"/locale/profile/empty.js\n";
+      append_to( basePath + "/chrome.manifest", extra_override);
+      append_to( basePath + "/chrome/locale/en-US/profile/empty.js", "");
+      append_to( basePath + "/chrome/locale/en-US/profile/empty.opml", "");
+    }
+    
     var serializer = new cp_serializer(this.manifests["Favorite"], this.faves_coop);
-    write_file(basePath + "/chrome/locale/en-US/profile/defaultBookmarks.js", serializer.serialize_manifest("Favorite"));
+    // TODO - Localize the Favorites Toolbar name?
+    var fave_contents = "if (!coop.toolbar.folder) coop.toolbar.folder = new coop.Folder({name: \"Favorites Toolbar\"});\n";
+    write_file(basePath + "/chrome/locale/en-US/profile/defaultBookmarks.js", fave_contents + serializer.serialize_manifest("Favorite"));
     serializer = new cp_serializer(this.manifests["Feed"], this.faves_coop);
     write_file(basePath + "/chrome/locale/en-US/profile/defaultFeeds.opml", serializer.serialize_opml());
-    serializer = new cp_serializer(this.manifests["MediaQuery"], this.faves_coop);
+    serializer = new cp_serializer(this.manifests["MediaQuery"], this.faves_coop, $('prettify').checked);
     write_file(basePath + "/chrome/locale/en-US/profile/defaultMedia.js",  serializer.serialize_manifest("MediaQuery"));
     alert("Now don't forget to run build.sh in the target directory!");
   },
@@ -121,6 +147,12 @@ var cp_controller = {
       win.document.getElementById("nav-bar").getAttribute("currentset"));
     cp_controller.set_pack_property("personaltoolbarset", 
       win.document.getElementById("PersonalToolbar").getAttribute("currentset"));
+  },
+  
+  set_myworldsets: function () {
+    if (base_prefs.getPrefType("flock.myworld.widgets.layout"))
+    cp_controller.set_pack_property("myworldwidgets", 
+      base_prefs.getComplexValue("flock.myworld.widgets.layout", CI.nsIPrefLocalizedString).data);
   },
   
   make_chrome_override: function(aFileName) {

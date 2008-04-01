@@ -50,7 +50,7 @@
           <vbox>
             <description>Extension DESCRIPTION</description>
             <spacer flex="1"/>
-            <textbox multiline="true" rows="8" cols="40" timeout="300" id="exten_description"/>
+            <textbox multiline="true" rows="3" cols="40" timeout="300" id="exten_description"/>
           </vbox>
           <hbox>
             <description>The FIRSTRUN URL</description>
@@ -68,17 +68,27 @@
             <textbox type="timed" size="40" timeout="300" oncommand="cp_controller.set_pack_property(this.id, this.value)" id="homepageurl"/>
           </hbox>
           <hbox>
-            <description>Set the toolbar state</description>
             <button oncommand="cp_controller.set_toolbarsets(); alert('Okay!');" label="Get toolbars"/>
+            <button oncommand="cp_controller.set_myworldsets(); alert('Okay!');" label="Get Myworld Widgets"/>
+            <!-- <textbox disabled="true" id="maintoolbarset"/>
+            <textbox disabled="true" id="personaltoolbarset"/> -->
           </hbox>  
-          <textbox disabled="true" id="maintoolbarset"/>
-          <textbox disabled="true" id="personaltoolbarset"/>
+            <description>Extension, or baked build?</description>
+          <hbox>
+            <radiogroup orient="horizontal" id="packtype">
+              <radio id="radioexten" label="extension" selected="true"/>
+              <radio id="radiobuild" label="affinity build"/>
+            </radiogroup>
+          </hbox>
         </vbox>
       </hbox>
       <spacer flex="1"/>  <!-- JMC TODO AUTHOR NAME AT SOME POINT -->
       <spacer height="20"/>
       <vbox>
-        <description style="font-size: 200%; ">Drag and Drop stuff here</description>
+        <hbox pack="stretch" align="stretch" flex="1">
+          <description style="font-size: 200%; " flex="1">Drag and Drop stuff here</description>
+          <checkbox label="Prettify Media Stream Labels" checked="true" id="prettify" onchange=""/>
+        </hbox>
         <vbox style="min-height: 100px; min-width: 300px; border: 2px dotted red; margin: 20px; padding: 10px;" 
          ondraggesture="nsDragAndDrop.startDrag(event, cp_dnd);" 
          ondragover="nsDragAndDrop.dragOver(event, cp_dnd);"      
