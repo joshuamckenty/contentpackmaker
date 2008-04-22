@@ -3,3 +3,6 @@ pref("flock.affinity.%EXTENNAME%.firstRunURL", "%FIRSTRUNURL%");
 pref("flock.affinity.%EXTENNAME%.flockHomepage", "%HOMEPAGEURL%");
 pref("flock.affinity.%EXTENNAME%.lastversion", "firstrun");
 pref("general.useragent.edition", "%EXTENNAME%");
+// pref("flock.media.defaultquery.label", "");
+// pref("flock.media.defaultquery.query", "");
+// pref("flock.media.defaultquery.service", "");

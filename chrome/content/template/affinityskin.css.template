@@ -39,7 +39,11 @@
   border-top: 0;
 }
 
-#main-window[affinityskin] toolbar:not([id="FindToolbar"]), toolbarpalette {
+#main-window[affinityskin] #nav-bar,
+#main-window[affinityskin] #toolbar-menubar,
+#main-window[affinityskin] #nav-bar + toolbar:not([id="FindToolbar"]),
+#main-window[affinityskin] #PersonalToolbar,
+toolbarpalette {
   -moz-appearance: none !important;
   background-image: none !important; /* mac-specific */
   background-repeat: no-repeat !important;  /* mac-specific */
@@ -103,6 +107,9 @@
   background-repeat: no-repeat !important;
   width: 5px !important;
   margin: 0px;
+  padding: 0px;
+  border: 0px;
+  background-position: bottom left;
 }
 
 #main-window[affinityskin] #personal-bookmarks {
@@ -141,4 +148,14 @@ statusbar[affinityskin] {
 #main-window[_affinityskin-dark-style*="toolbox"] #navigator-toolbox toolbarbutton,
 #main-window[_affinityskin-dark-style*="status"] > statusbar {
   color: white !important;
+}
+
+
+#main-window[_affinityskin-dark-style*="both"] #PersonalToolbar + toolbar toolbarbutton,
+#main-window[_affinityskin-dark-style*="true"] #PersonalToolbar + toolbar toolbarbutton,
+#main-window[_affinityskin-dark-style*="toolbox"] #PersonalToolbar + toolbar toolbarbutton,
+#main-window[_affinityskin-dark-style*="both"] #PersonalToolbar + toolbar + toolbar toolbarbutton,
+#main-window[_affinityskin-dark-style*="true"] #PersonalToolbar + toolbar + toolbar toolbarbutton,
+#main-window[_affinityskin-dark-style*="toolbox"] #PersonalToolbar + toolbar + toolbar toolbarbutton {
+  color: inherit !important; 
 }

@@ -44,7 +44,11 @@
   border-top: 0;
 }
 
-#main-window[affinityskin] toolbar:not([id="FindToolbar"]), toolbarpalette {
+#main-window[affinityskin] #nav-bar,
+#main-window[affinityskin] #toolbar-menubar,
+#main-window[affinityskin] #nav-bar + toolbar:not([id="FindToolbar"]),
+#main-window[affinityskin] #PersonalToolbar,
+toolbarpalette {
   -moz-appearance: none !important;
   background-image: none !important; /* mac-specific */
   background-repeat: no-repeat !important;  /* mac-specific */
@@ -107,6 +111,9 @@
   background-repeat: no-repeat !important;
   width: 5px !important;
   margin: 0px;
+  padding: 0px;
+  border: 0px;
+  background-position: bottom left;
 }
 
 #main-window[affinityskin] #personal-bookmarks {
@@ -147,7 +154,7 @@ statusbar[affinityskin] {
   -moz-appearance: none !important;
   border: 0 !important;
 }
-
+/*
 #main-window[_affinityskin-dark-style*="both"] #navigator-toolbox menubar > menu,
 #main-window[_affinityskin-dark-style*="both"] #navigator-toolbox toolbarbutton,
 #main-window[_affinityskin-dark-style*="both"] > statusbar,
@@ -159,7 +166,7 @@ statusbar[affinityskin] {
 #main-window[_affinityskin-dark-style*="status"] > statusbar {
   color: white !important;
 }
-
+*/
 /* Toolbarbutton changes */
 #main-window[affinityskin] .toolbarbutton-1 {
   /* list-style-image:url("chrome://myspacepack/skin/Toolbar.png"); */

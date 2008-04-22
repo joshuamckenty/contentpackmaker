@@ -112,7 +112,16 @@ var imageRules = {
       apply: function(win, aPath) {
         
       }
-   }
+   },
+   "bfjoined24.png" : {
+     chrome: "chrome://browser/skin/bfjoined24.png",
+     apply: function (win, aPath) { }
+   },
+   
+   "bfjoined32.png" : {
+     chrome: "chrome://browser/skin/bfjoined32.png",
+     apply: function (win, aPath) { }
+   },
 }
 
 function getMyWorldWin(win) {

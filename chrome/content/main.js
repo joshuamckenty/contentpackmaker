@@ -132,7 +132,8 @@ override chrome://flock/locale/favorites/defaultFavorites.js chrome://"+ this.cp
     
     var serializer = new cp_serializer(this.manifests["Favorite"], this.faves_coop);
     // TODO - Localize the Favorites Toolbar name?
-    var fave_contents = "if (!coop.toolbar.folder) coop.toolbar.folder = new coop.Folder({name: \"Favorites Toolbar\"});\n";
+    var fave_contents = "if (!coop.toolbar.folder) {\n  coop.toolbar.folder = new coop.Folder({name: \"Favorites Toolbar\"});\n";
+    fave_contents += "  coop.bookmarks_root.children.addOnce(coop.toolbar.folder);\n}\n\n";
     write_file(basePath + "/chrome/locale/en-US/profile/defaultBookmarks.js", fave_contents + serializer.serialize_manifest("Favorite"));
     serializer = new cp_serializer(this.manifests["Feed"], this.faves_coop);
     write_file(basePath + "/chrome/locale/en-US/profile/defaultFeeds.opml", serializer.serialize_opml());
@@ -330,7 +331,7 @@ override chrome://flock/locale/favorites/defaultFavorites.js chrome://"+ this.cp
      if (this[this.packProps[i]])
       outputString += "cp_controller.set_pack_property(\"" 
         + this.packProps[i]  + "\", \"" 
-        + this[this.packProps[i]].replace(/\n/g, "\\n") +"\");\n";
+        + this[this.packProps[i]].replace(/\n/g, "\\n").replace(/"/g, "\\\"") +"\");\n";
    }
    write_file(aFilePath, outputString);
   },

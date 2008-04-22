@@ -41,13 +41,18 @@ var %EXTENNAME%ContentPackController = {
       return;
     }                  
 
+    var formatter =
+          Cc["@mozilla.org/toolkit/URLFormatterService;1"]
+                    .getService(Ci.nsIURLFormatter);
     var pageURL;
     if (lastVersion == "firstrun") {
       //this.sendPing("install");
-      pageURL = this._getPref(this.PREFBASE + "firstRunURL");
+      if (this._getPref(this.PREFBASE + "firstRunURL"))
+        pageURL = formatter.formatURLPref(this.PREFBASE + "firstRunURL");
     } else {
       this.uninstallContent();
-      pageURL = this._getPref(this.PREFBASE + "upgradeURL");
+      if (this._getPref(this.PREFBASE + "upgradeURL"))
+        pageURL = formatter.formatURLPref(this.PREFBASE + "upgradeURL");
     }
     if (pageURL && pageURL != "null") {
       setTimeout(function(){window.openUILinkIn(pageURL, "tab")}, this.SHOW_DELAY);

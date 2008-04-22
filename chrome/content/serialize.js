@@ -31,7 +31,7 @@ cp_serializer.prototype = {
       return "\naddBookmarkTo(\"" 
         +  aObj.name.replace(/&/g, "&amp;") + "\", \"" 
          + aObj.URL + "\", \"" 
-         + aObj.description + "\", " + aParent + ", \"" 
+         + ((aObj.description != "null") ? aObj.description : "") + "\", " + aParent + ", \"" 
          + aObj.id() + "\", \"" + aObj.favicon + "\"); \n";
     },
     "MediaQuery": function(aObj, aParent) {
